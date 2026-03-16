@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — ARFM</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .main {
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    .dash-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 32px;
+    }
+
+    /* Header */
+    .dash-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .dash-title {
+      font-family: var(--display);
+      font-size: 36px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .dash-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .dash-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border2);
+      background: var(--surface2);
+    }
+
+    .stat-card.filter-active {
+      border-color: var(--green);
+      background: var(--green-dim);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .stat-card.s-green::before {
+      background: var(--green);
+    }
+
+    .stat-card.s-red::before {
+      background: var(--red);
+    }
+
+    .stat-card.s-amber::before {
+      background: var(--amber);
+    }
+
+    .stat-card.s-blue::before {
+      background: var(--blue);
+    }
+
+    .stat-val {
+      font-family: var(--display);
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card.s-green .stat-val {
+      color: var(--green);
+    }
+
+    .stat-card.s-red .stat-val {
+      color: var(--red);
+    }
+
+    .stat-card.s-amber .stat-val {
+      color: var(--amber);
+    }
+
+    .stat-card.s-blue .stat-val {
+      color: var(--blue);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .stat-icon {
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      font-size: 28px;
+      opacity: 0.15;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      padding: 5px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.04em;
+    }
+
+    .filter-pill:hover {
+      border-color: var(--border2);
+      color: var(--text-mid);
+    }
+
+    .filter-pill.active {
+      border-color: var(--green);
+      color: var(--green);
+      background: var(--green-dim);
+    }
+
+    .filter-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .search-box {
+      position: relative;
+    }
+
+    .search-box input {
+      width: 220px;
+      padding: 7px 14px 7px 32px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .sort-select {
+      width: 160px;
+    }
+
+    .bulk-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--green-dim);
+      border: 1px solid var(--green-mid);
+      font-size: 12px;
+      color: var(--green);
+      margin-bottom: 12px;
+    }
+
+    .bulk-bar.visible {
+      display: flex;
+    }
+
+    /* Table */
+    .acc-table {
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .acc-head {
+      display: grid;
+      grid-template-columns: 28px 2.2fr 1.6fr 1fr 1fr 1.2fr 1fr 120px;
+      padding: 10px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      gap: 8px;
+    }
+
+    .acc-row {
+      display: grid;
+      grid-template-columns: 28px 2.2fr 1.6fr 1fr 1fr 1.2fr 1fr 120px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      gap: 8px;
+    }
+
+    .acc-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .acc-row:last-child {
+      border-bottom: none;
+    }
+
+    .acc-row.selected {
+      background: var(--green-dim);
+    }
+
+    .acc-cb {
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .acc-cb.checked {
+      border-color: var(--green);
+      background: var(--green);
+      color: #000;
+      font-size: 9px;
+    }
+
+    .acc-company {
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .acc-favicon {
+      width: 16px;
+      height: 16px;
+      border-radius: 2px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .acc-favicon img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .acc-domain {
+      color: var(--text-dim);
+      font-size: 11px;
+    }
+
+    .acc-date {
+      color: var(--text-dim);
+      font-size: 11px;
+    }
+
+    .acc-age {
+      color: var(--text-dim);
+      font-size: 11px;
+    }
+
+    .acc-status {
+      font-size: 11px;
+    }
+
+    .status-pending {
+      color: var(--amber);
+    }
+
+    .status-sent {
+      color: var(--blue);
+    }
+
+    .status-complete {
+      color: var(--green);
+    }
+
+    .status-ignored {
+      color: var(--text-dim);
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .empty-state h3 {
+      font-family: var(--display);
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      color: var(--text-mid);
+      margin-bottom: 24px;
+    }
+
+    /* MODAL */
+    .modal-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .modal-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .meta-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+    }
+
+    .meta-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .meta-val {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .reg-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .reg-tab {
+      padding: 8px 18px;
+      font-size: 11px;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      letter-spacing: 0.05em;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: var(--mono);
+      transition: all 0.2s;
+    }
+
+    .reg-tab.active {
+      color: var(--green);
+      border-bottom-color: var(--green);
+    }
+
+    .email-draft {
+      min-height: 340px;
+      font-size: 11px;
+      line-height: 1.75;
+      padding: 16px;
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @media (max-width: 900px) {
+
+      .acc-head,
+      .acc-row {
+        grid-template-columns: 28px 2fr 1fr 1fr 100px;
+      }
+
+      .acc-head>*:nth-child(n+5):not(:last-child),
+      .acc-row>*:nth-child(n+5):not(:last-child) {
+        display: none;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .dash-wrap {
+        padding: 24px 16px;
+      }
+
+      .acc-head,
+      .acc-row {
+        grid-template-columns: 28px 1fr 1fr 90px;
+      }
+
+      .acc-head>*:nth-child(n+4):not(:last-child),
+      .acc-row>*:nth-child(n+4):not(:last-child) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <script src="nav.js"></script>
+  <div class="main">
+    <div class="dash-wrap">
+
+      <!-- Header -->
+      <div class="dash-header">
+        <div>
+          <div class="section-label" style="margin-bottom:8px;">Digital Footprint</div>
+          <h1 class="dash-title">Your Accounts</h1>
+          <div class="dash-subtitle" id="dash-subtitle">Loading…</div>
+        </div>
+        <div class="dash-actions">
+          <a href="scan.html" class="btn btn-outline btn-sm">↺ Rescan</a>
+          <button class="btn btn-primary btn-sm" onclick="openBulkDelete()" id="bulk-delete-btn"
+            style="display:none">Delete Selected</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card s-green" onclick="setFilter('all')" id="stat-all">
+          <div class="stat-val" id="stat-total">—</div>
+          <div class="stat-label">Total Accounts</div>
+          <div class="stat-icon">🔍</div>
+        </div>
+        <div class="stat-card s-red" onclick="setFilter('high')" id="stat-high">
+          <div class="stat-val" id="stat-high-val">—</div>
+          <div class="stat-label">High Risk</div>
+          <div class="stat-icon">⚠</div>
+        </div>
+        <div class="stat-card s-amber" onclick="setFilter('old')" id="stat-old">
+          <div class="stat-val" id="stat-old-val">—</div>
+          <div class="stat-label">Pre-2020</div>
+          <div class="stat-icon">📅</div>
+        </div>
+        <div class="stat-card s-blue" onclick="setFilter('done')" id="stat-done">
+          <div class="stat-val" id="stat-done-val">—</div>
+          <div class="stat-label">Requests Sent</div>
+          <div class="stat-icon">✓</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="filter-pills" id="filter-pills">
+          <button class="filter-pill active" data-filter="all">All</button>
+          <button class="filter-pill" data-filter="high">High Risk</button>
+          <button class="filter-pill" data-filter="medium">Medium Risk</button>
+          <button class="filter-pill" data-filter="old">Pre-2020</button>
+          <button class="filter-pill" data-filter="pending">Pending</button>
+          <button class="filter-pill" data-filter="sent">Request Sent</button>
+        </div>
+        <div class="filter-right">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="Search companies…" oninput="renderTable()">
+          </div>
+          <select class="sort-select input" id="sort-select" onchange="renderTable()">
+            <option value="risk">Sort: Risk</option>
+            <option value="conf">Sort: Confidence</option>
+            <option value="date">Sort: Signup Date</option>
+            <option value="company">Sort: Company</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Bulk bar -->
+      <div class="bulk-bar" id="bulk-bar">
+        <span id="bulk-count">0 selected</span>
+        <button class="btn btn-primary btn-xs" onclick="openBulkDelete()">Generate Bulk Requests →</button>
+        <button class="btn btn-ghost btn-xs" onclick="clearSelection()">Clear</button>
+      </div>
+
+      <!-- Table -->
+      <div class="acc-table" id="acc-table">
+        <div class="acc-head">
+          <div></div>
+          <div>Company</div>
+          <div>Domain</div>
+          <div>Signup</div>
+          <div>Age</div>
+          <div>Confidence</div>
+          <div>Risk / Status</div>
+          <div>Action</div>
+        </div>
+        <div id="table-body"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div class="modal-backdrop" id="detail-modal" style="display:none" onclick="if(event.target===this)closeModal()">
+    <div class="modal" style="max-width:640px">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="modal-company">Company</div>
+          <div class="modal-subtitle" id="modal-domain">domain.com</div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-meta">
+          <div class="meta-item">
+            <div class="meta-label">Signup Date</div>
+            <div class="meta-val" id="modal-date">—</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Account Age</div>
+            <div class="meta-val" id="modal-age">—</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Risk Score</div>
+            <div class="meta-val" id="modal-risk">—</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Confidence</div>
+            <div class="meta-val" id="modal-conf">—</div>
+          </div>
+        </div>
+
+        <div
+          style="font-size:11px;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;">
+          Deletion Request Template</div>
+        <div class="reg-tabs">
+          <button class="reg-tab active" onclick="switchReg('gdpr',this)">🇪🇺 GDPR Art. 17</button>
+          <button class="reg-tab" onclick="switchReg('ccpa',this)">🇺🇸 CCPA § 1798.105</button>
+        </div>
+        <textarea class="input email-draft" id="email-draft"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm copy-btn" onclick="copyDraft()">📋 Copy</button>
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="markSentFromModal()">Mark as Sent ✓</button>
+        <a id="mailto-link" class="btn btn-primary btn-sm" href="#" target="_blank" onclick="markSentFromModal()">Open
+          in Mail →</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let filter = 'all';
+    let selected = new Set();
+    let currentModalId = null;
+    let currentReg = 'gdpr';
+
+    // Check for scanned accounts
+    function ensureAccounts() {
+      // No demo data — accounts populated after real Google scan
+      if (AppState.accounts.length === 0) {
+        document.getElementById('table-body').innerHTML = `<div class="empty-state">
+      <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+      <h3>No accounts discovered yet</h3>
+      <p>Connect your Google account and run a scan to discover your digital footprint.</p>
+      <a href="connect.html" class="btn btn-primary" style="margin-top:8px;">Connect & Scan →</a>
+    </div>`;
+      }
+    }
+
+    function getStatus(id) {
+      const r = AppState.requests[id];
+      if (!r) return 'pending';
+      return r.status || 'pending';
+    }
+
+    function getFilteredAccounts() {
+      let accs = [...AppState.accounts];
+      const q = document.getElementById('search-input')?.value.toLowerCase() || '';
+      if (q) accs = accs.filter(a => a.company.toLowerCase().includes(q) || a.domain.toLowerCase().includes(q));
+
+      switch (filter) {
+        case 'high': accs = accs.filter(a => a.riskScore === 'High'); break;
+        case 'medium': accs = accs.filter(a => a.riskScore === 'Medium'); break;
+        case 'old': accs = accs.filter(a => a.signupDate < '2020'); break;
+        case 'pending': accs = accs.filter(a => getStatus(a.id) === 'pending'); break;
+        case 'sent': accs = accs.filter(a => getStatus(a.id) !== 'pending'); break;
+        case 'done': accs = accs.filter(a => getStatus(a.id) === 'complete'); break;
+      }
+
+      const sort = document.getElementById('sort-select')?.value || 'risk';
+      accs.sort((a, b) => {
+        if (sort === 'risk') {
+          const ord = { High: 0, Medium: 1, Low: 2 };
+          return (ord[a.riskScore] || 1) - (ord[b.riskScore] || 1);
+        }
+        if (sort === 'conf') return b.confidence - a.confidence;
+        if (sort === 'date') return (a.signupDate || '').localeCompare(b.signupDate || '');
+        if (sort === 'company') return a.company.localeCompare(b.company);
+        return 0;
+      });
+      return accs;
+    }
+
+    function renderStats() {
+      const all = AppState.accounts;
+      document.getElementById('dash-subtitle').textContent = `${all.length} accounts found · ${all.filter(a => a.riskScore === 'High').length} high risk`;
+      document.getElementById('stat-total').textContent = all.length;
+      document.getElementById('stat-high-val').textContent = all.filter(a => a.riskScore === 'High').length;
+      document.getElementById('stat-old-val').textContent = all.filter(a => a.signupDate < '2020').length;
+      document.getElementById('stat-done-val').textContent = Object.values(AppState.requests).filter(r => r && r.status !== 'pending').length;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const accs = getFilteredAccounts();
+
+      if (!accs.length) {
+        tbody.innerHTML = `<div class="empty-state"><h3>No accounts match</h3><p>Try adjusting your filter or search.</p></div>`;
+        return;
+      }
+
+      tbody.innerHTML = accs.map(a => {
+        const status = getStatus(a.id);
+        const isChecked = selected.has(a.id);
+        const statusLabels = { pending: '⬡ Pending', sent: '→ Sent', complete: '✓ Done', ignored: '— Ignored' };
+        const statusClass = { pending: 'status-pending', sent: 'status-sent', complete: 'status-complete', ignored: 'status-ignored' };
+        return `
+    <div class="acc-row${isChecked ? ' selected' : ''}" onclick="rowClick('${a.id}',event)">
+      <div class="acc-cb${isChecked ? ' checked' : ''}" data-id="${a.id}">${isChecked ? '✓' : ''}</div>
+      <div class="acc-company">
+        <div class="acc-favicon"><img src="https://www.google.com/s2/favicons?domain=${a.domain}&sz=16" alt="" onerror="this.style.display='none'"></div>
+        ${a.company}
+      </div>
+      <div class="acc-domain">${a.domain}</div>
+      <div class="acc-date">${fmtDate(a.signupDate)}</div>
+      <div class="acc-age">${accountAge(a.signupDate)}</div>
+      <div class="conf-wrap" style="padding-right:8px;">
+        <div class="conf-track"><div class="conf-fill" style="width:${Math.round(a.confidence * 100)}%"></div></div>
+        <span class="conf-val">${Math.round(a.confidence * 100)}%</span>
+      </div>
+      <div><span class="badge ${riskClass(a.riskScore)}">${a.riskScore}</span></div>
+      <div onclick="event.stopPropagation();openModal('${a.id}')">
+        <button class="btn btn-primary btn-xs">${status === 'pending' ? 'DELETE →' : 'VIEW'}</button>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    function rowClick(id, e) {
+      if (e.target.closest('.acc-cb') || e.target.closest('button') || e.target.closest('a')) return;
+      openModal(id);
+    }
+
+    function toggleSelect(id) {
+      if (selected.has(id)) selected.delete(id);
+      else selected.add(id);
+      updateBulkBar();
+      renderTable();
+    }
+
+    function clearSelection() { selected.clear(); updateBulkBar(); renderTable(); }
+
+    function updateBulkBar() {
+      const bar = document.getElementById('bulk-bar');
+      const btn = document.getElementById('bulk-delete-btn');
+      if (selected.size > 0) {
+        bar.classList.add('visible');
+        document.getElementById('bulk-count').textContent = selected.size + ' selected';
+        btn.style.display = 'inline-flex';
+      } else {
+        bar.classList.remove('visible');
+        btn.style.display = 'none';
+      }
+    }
+
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.toggle('active', p.dataset.filter === f));
+      // Highlight stat card
+      ['stat-all', 'stat-high', 'stat-old', 'stat-done'].forEach(id => document.getElementById(id)?.classList.remove('filter-active'));
+      const map = { all: 'stat-all', high: 'stat-high', old: 'stat-old', done: 'stat-done' };
+      if (map[f]) document.getElementById(map[f])?.classList.add('filter-active');
+      renderTable();
+    }
+
+    // Filter pills
+    document.addEventListener('DOMContentLoaded', () => {
+      ensureAccounts();
+      renderStats();
+      renderTable();
+
+      document.querySelectorAll('.filter-pill').forEach(p => {
+        p.addEventListener('click', () => setFilter(p.dataset.filter));
+      });
+    });
+
+    // Modal
+    function openModal(id) {
+      const a = AppState.accounts.find(x => x.id === id);
+      if (!a) return;
+      currentModalId = id;
+      currentReg = 'gdpr';
+
+      document.getElementById('modal-company').textContent = a.company;
+      document.getElementById('modal-domain').textContent = a.domain;
+      document.getElementById('modal-date').textContent = fmtDate(a.signupDate);
+      document.getElementById('modal-age').textContent = accountAge(a.signupDate);
+      document.getElementById('modal-risk').innerHTML = `<span class="badge ${riskClass(a.riskScore)}">${a.riskScore}</span>`;
+      document.getElementById('modal-conf').textContent = Math.round(a.confidence * 100) + '%';
+
+      const userEmail = AppState.user?.email || 'your@email.com';
+      document.getElementById('email-draft').value = Templates.gdpr(a.company, userEmail);
+
+      const subject = encodeURIComponent(`Right to Erasure Request – Article 17 GDPR`);
+      document.getElementById('mailto-link').href = `mailto:privacy@${a.domain}?subject=${subject}`;
+
+      // Set reg tabs active
+      document.querySelectorAll('.reg-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+
+      document.getElementById('detail-modal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('detail-modal').style.display = 'none'; currentModalId = null; }
+
+    function switchReg(reg, btn) {
+      currentReg = reg;
+      document.querySelectorAll('.reg-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      const a = AppState.accounts.find(x => x.id === currentModalId);
+      if (!a) return;
+      const userEmail = AppState.user?.email || 'your@email.com';
+      document.getElementById('email-draft').value = reg === 'gdpr'
+        ? Templates.gdpr(a.company, userEmail)
+        : Templates.ccpa(a.company, userEmail);
+      // Update mailto
+      const subject = reg === 'gdpr'
+        ? encodeURIComponent('Right to Erasure Request – Article 17 GDPR')
+        : encodeURIComponent('CCPA Request to Delete Personal Information');
+      document.getElementById('mailto-link').href = `mailto:privacy@${a.domain}?subject=${subject}`;
+    }
+
+    function copyDraft() {
+      const text = document.getElementById('email-draft').value;
+      navigator.clipboard.writeText(text).then(() => showToast('Email copied to clipboard', 'success'));
+    }
+
+    function markSentFromModal() {
+      if (!currentModalId) return;
+      AppState.requests[currentModalId] = { status: 'sent', sentAt: new Date().toISOString(), regulation: currentReg };
+      AppState.save();
+      const a = AppState.accounts.find(x => x.id === currentModalId);
+      showToast(`Request for ${a?.company} marked as sent`, 'success');
+      renderStats();
+      renderTable();
+      closeModal();
+    }
+
+    function openBulkDelete() {
+      if (!selected.size) return;
+      const ids = [...selected];
+      ids.forEach(id => {
+        if (!AppState.requests[id]) {
+          AppState.requests[id] = { status: 'sent', sentAt: new Date().toISOString(), regulation: 'gdpr' };
+        }
+      });
+      AppState.save();
+      showToast(`${ids.length} requests marked as sent`, 'success');
+      clearSelection();
+      renderStats();
+      renderTable();
+    }
+
+    // Keyboard
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  </script>
+</body>
+
+</html>

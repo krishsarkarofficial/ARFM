@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Requests — ARFM</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .main {
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    .req-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 32px;
+    }
+
+    .req-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    /* LEFT: account list */
+    .acc-list-panel {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 12px;
+      color: var(--text-mid);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .panel-count {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .acc-list-search {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .acc-list-search input {
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+
+    .acc-list-body {
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+    }
+
+    .acc-list-item {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s;
+    }
+
+    .acc-list-item:hover {
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .acc-list-item.active {
+      background: var(--green-dim);
+      border-left: 2px solid var(--green);
+    }
+
+    .acc-list-item.sent {
+      opacity: 0.6;
+    }
+
+    .ali-favicon {
+      width: 24px;
+      height: 24px;
+      border-radius: 3px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .ali-favicon img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .ali-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ali-company {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ali-domain {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .ali-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    /* RIGHT: editor */
+    .editor-panel {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .editor-empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .editor-empty h3 {
+      font-family: var(--display);
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    .editor-empty p {
+      font-size: 13px;
+      color: var(--text-mid);
+    }
+
+    .editor-active {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .editor-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .editor-company {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .editor-domain {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .editor-meta-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .emr-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .emr-label {
+      color: var(--text-dim);
+    }
+
+    .emr-val {
+      color: var(--text-mid);
+    }
+
+    .editor-toolbar {
+      padding: 12px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .reg-tabs-bar {
+      display: flex;
+      gap: 0;
+    }
+
+    .rtb {
+      padding: 6px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .rtb:first-child {
+      border-right: none;
+    }
+
+    .rtb.active {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .editor-toolbar-right {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .editor-body {
+      flex: 1;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-body textarea {
+      flex: 1;
+      min-height: 380px;
+      padding: 20px;
+      font-size: 12px;
+      line-height: 1.8;
+      border: none;
+      border-radius: 0;
+      resize: none;
+      background: var(--bg);
+    }
+
+    .editor-body textarea:focus {
+      border: none;
+      outline: none;
+    }
+
+    .editor-footer {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .editor-footer-left {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .char-count {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .editor-footer-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Sent overlay */
+    .sent-overlay {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .sent-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--green-dim);
+      border: 2px solid var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 20px;
+    }
+
+    .sent-title {
+      font-family: var(--display);
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .sent-sub {
+      font-size: 13px;
+      color: var(--text-mid);
+      margin-bottom: 24px;
+    }
+
+    /* Stats at top */
+    .req-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .rs-stat {
+      background: var(--surface);
+      padding: 16px 18px;
+    }
+
+    .rs-val {
+      font-family: var(--display);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .rs-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .req-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .acc-list-body {
+        max-height: 300px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .req-wrap {
+        padding: 24px 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <script src="nav.js"></script>
+  <div class="main">
+    <div class="req-wrap">
+
+      <!-- Header -->
+      <div style="margin-bottom:8px;">
+        <div class="section-label">Deletion Requests</div>
+        <h1
+          style="font-family:var(--display);font-size:32px;font-weight:600;letter-spacing:-0.025em;margin-bottom:6px;">
+          Request Generator</h1>
+        <p style="font-size:12px;color:var(--text-dim);">Select an account from the list and generate a legally
+          compliant deletion request email.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="req-stats" id="req-stats">
+        <div class="rs-stat">
+          <div class="rs-val" id="rs-total" style="color:var(--text)">—</div>
+          <div class="rs-label">Accounts Found</div>
+        </div>
+        <div class="rs-stat">
+          <div class="rs-val" id="rs-pending" style="color:var(--amber)">—</div>
+          <div class="rs-label">Awaiting Request</div>
+        </div>
+        <div class="rs-stat">
+          <div class="rs-val" id="rs-sent" style="color:var(--blue)">—</div>
+          <div class="rs-label">Requests Sent</div>
+        </div>
+        <div class="rs-stat">
+          <div class="rs-val" id="rs-complete" style="color:var(--green)">—</div>
+          <div class="rs-label">Confirmed Deleted</div>
+        </div>
+      </div>
+
+      <!-- Layout -->
+      <div class="req-layout">
+
+        <!-- LEFT: list -->
+        <div class="acc-list-panel">
+          <div class="panel-header">
+            <span class="panel-title">Accounts</span>
+            <span class="panel-count" id="list-count">—</span>
+          </div>
+          <div class="acc-list-search">
+            <input type="text" placeholder="Filter accounts…" id="list-search" oninput="renderList()">
+          </div>
+          <div class="acc-list-body" id="acc-list-body"></div>
+        </div>
+
+        <!-- RIGHT: editor -->
+        <div class="editor-panel" id="editor-panel">
+
+          <!-- Empty state -->
+          <div class="editor-empty" id="editor-empty">
+            <div class="editor-empty-icon">⚖️</div>
+            <h3>Select an account</h3>
+            <p>Choose an account from the list to generate<br>a GDPR or CCPA deletion request.</p>
+          </div>
+
+          <!-- Active editor -->
+          <div class="editor-active" id="editor-active">
+            <div class="editor-header">
+              <div class="editor-company" id="ed-company">—</div>
+              <div class="editor-domain" id="ed-domain">—</div>
+              <div class="editor-meta-row">
+                <div class="emr-item"><span class="emr-label">Signup:</span><span class="emr-val" id="ed-date">—</span>
+                </div>
+                <div class="emr-item"><span class="emr-label">Age:</span><span class="emr-val" id="ed-age">—</span>
+                </div>
+                <div class="emr-item"><span class="emr-label">Risk:</span><span id="ed-risk">—</span></div>
+                <div class="emr-item"><span class="emr-label">Confidence:</span><span class="emr-val"
+                    id="ed-conf">—</span></div>
+              </div>
+            </div>
+
+            <div class="editor-toolbar">
+              <div class="reg-tabs-bar">
+                <button class="rtb active" id="rtb-gdpr" onclick="setReg('gdpr')">🇪🇺 GDPR Art. 17</button>
+                <button class="rtb" id="rtb-ccpa" onclick="setReg('ccpa')">🇺🇸 CCPA § 1798.105</button>
+              </div>
+              <div class="editor-toolbar-right">
+                <button class="btn btn-ghost btn-xs" onclick="resetDraft()">↺ Reset</button>
+              </div>
+            </div>
+
+            <div class="editor-body">
+              <textarea id="draft-area" oninput="updateCharCount()"></textarea>
+            </div>
+
+            <div class="editor-footer">
+              <div class="editor-footer-left">
+                <span class="char-count" id="char-count">0 chars</span>
+              </div>
+              <div class="editor-footer-right">
+                <button class="btn btn-ghost btn-sm" onclick="copyRequest()">📋 Copy</button>
+                <a id="mailto-btn" class="btn btn-outline btn-sm" href="#" target="_blank">Open in Mail →</a>
+                <button class="btn btn-primary btn-sm" onclick="markSent()">Mark Sent ✓</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sent state -->
+          <div class="sent-overlay" id="sent-overlay">
+            <div class="sent-icon">✓</div>
+            <div class="sent-title">Request sent!</div>
+            <div class="sent-sub" id="sent-sub">Deletion request for — marked as sent.</div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-outline btn-sm" onclick="editAgain()">Edit Again</button>
+              <a href="tracker.html" class="btn btn-primary btn-sm">Track Response →</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let currentAcc = null;
+    let currentReg = 'gdpr';
+
+    function getStatus(id) {
+      return AppState.requests[id]?.status || 'pending';
+    }
+
+    function renderStats() {
+      const all = AppState.accounts;
+      const sent = Object.values(AppState.requests).filter(r => r && r.status === 'sent').length;
+      const done = Object.values(AppState.requests).filter(r => r && r.status === 'complete').length;
+      document.getElementById('rs-total').textContent = all.length;
+      document.getElementById('rs-pending').textContent = all.filter(a => getStatus(a.id) === 'pending').length;
+      document.getElementById('rs-sent').textContent = sent;
+      document.getElementById('rs-complete').textContent = done;
+    }
+
+    function renderList() {
+      const q = document.getElementById('list-search').value.toLowerCase();
+      let accs = AppState.accounts.filter(a =>
+        !q || a.company.toLowerCase().includes(q) || a.domain.toLowerCase().includes(q)
+      );
+      // Sort: pending first, then by risk
+      accs.sort((a, b) => {
+        const sa = getStatus(a.id) === 'pending' ? 0 : 1;
+        const sb = getStatus(b.id) === 'pending' ? 0 : 1;
+        if (sa !== sb) return sa - sb;
+        const ord = { High: 0, Medium: 1, Low: 2 };
+        return (ord[a.riskScore] || 1) - (ord[b.riskScore] || 1);
+      });
+
+      document.getElementById('list-count').textContent = accs.length + ' accounts';
+
+      const body = document.getElementById('acc-list-body');
+      body.innerHTML = accs.map(a => {
+        const status = getStatus(a.id);
+        const isCurrent = currentAcc?.id === a.id;
+        const statusIcons = { pending: '', sent: '→', complete: '✓' };
+        const statusColors = { pending: 'var(--text-dim)', sent: 'var(--blue)', complete: 'var(--green)' };
+        return `
+    <div class="acc-list-item${isCurrent ? ' active' : ''}${status !== 'pending' ? ' sent' : ''}" onclick="selectAccount('${a.id}')">
+      <div class="ali-favicon">
+        <img src="https://www.google.com/s2/favicons?domain=${a.domain}&sz=32" alt="" onerror="this.style.display='none'">
+      </div>
+      <div class="ali-info">
+        <div class="ali-company">${a.company}</div>
+        <div class="ali-domain">${a.domain}</div>
+      </div>
+      <div class="ali-right">
+        <span class="badge ${riskClass(a.riskScore)}">${a.riskScore}</span>
+        <span style="font-size:11px;color:${statusColors[status]}">${statusIcons[status]} ${status}</span>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    function selectAccount(id) {
+      currentAcc = AppState.accounts.find(a => a.id === id);
+      if (!currentAcc) return;
+
+      const status = getStatus(id);
+      document.getElementById('editor-empty').style.display = 'none';
+
+      if (status === 'complete') {
+        document.getElementById('editor-active').style.display = 'none';
+        document.getElementById('sent-overlay').style.display = 'flex';
+        document.getElementById('sent-sub').textContent = `Deletion request for ${currentAcc.company} marked as sent.`;
+      } else {
+        document.getElementById('sent-overlay').style.display = 'none';
+        document.getElementById('editor-active').style.display = 'flex';
+        populateEditor();
+      }
+
+      renderList();
+    }
+
+    function populateEditor() {
+      if (!currentAcc) return;
+      const a = currentAcc;
+      document.getElementById('ed-company').textContent = a.company;
+      document.getElementById('ed-domain').textContent = a.domain;
+      document.getElementById('ed-date').textContent = fmtDate(a.signupDate);
+      document.getElementById('ed-age').textContent = accountAge(a.signupDate);
+      document.getElementById('ed-risk').innerHTML = `<span class="badge ${riskClass(a.riskScore)}">${a.riskScore}</span>`;
+      document.getElementById('ed-conf').textContent = Math.round(a.confidence * 100) + '%';
+      generateDraft();
+    }
+
+    function setReg(reg) {
+      currentReg = reg;
+      document.getElementById('rtb-gdpr').classList.toggle('active', reg === 'gdpr');
+      document.getElementById('rtb-ccpa').classList.toggle('active', reg === 'ccpa');
+      generateDraft();
+    }
+
+    function generateDraft() {
+      if (!currentAcc) return;
+      const userEmail = AppState.user?.email || 'your@email.com';
+      const draft = currentReg === 'gdpr'
+        ? Templates.gdpr(currentAcc.company, userEmail)
+        : Templates.ccpa(currentAcc.company, userEmail);
+      document.getElementById('draft-area').value = draft;
+      updateCharCount();
+      updateMailto();
+    }
+
+    function resetDraft() { generateDraft(); }
+
+    function updateCharCount() {
+      const len = document.getElementById('draft-area').value.length;
+      document.getElementById('char-count').textContent = len + ' chars';
+    }
+
+    function updateMailto() {
+      if (!currentAcc) return;
+      const subject = currentReg === 'gdpr'
+        ? 'Right to Erasure Request – Article 17 GDPR'
+        : 'CCPA Request to Delete Personal Information';
+      const body = document.getElementById('draft-area').value;
+      const mailto = `mailto:privacy@${currentAcc.domain}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      document.getElementById('mailto-btn').href = mailto;
+    }
+
+    function copyRequest() {
+      navigator.clipboard.writeText(document.getElementById('draft-area').value)
+        .then(() => showToast('Email copied to clipboard', 'success'));
+    }
+
+    function markSent() {
+      if (!currentAcc) return;
+      AppState.requests[currentAcc.id] = { status: 'sent', sentAt: new Date().toISOString(), regulation: currentReg };
+      AppState.save();
+      showToast(`Request for ${currentAcc.company} marked as sent`, 'success');
+      document.getElementById('editor-active').style.display = 'none';
+      document.getElementById('sent-overlay').style.display = 'flex';
+      document.getElementById('sent-sub').textContent = `Deletion request for ${currentAcc.company} has been sent.`;
+      renderStats();
+      renderList();
+    }
+
+    function editAgain() {
+      document.getElementById('sent-overlay').style.display = 'none';
+      document.getElementById('editor-active').style.display = 'flex';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load demo data if needed
+      if (!AppState.accounts.length) {
+        location.href = 'dashboard.html'; // redirect to load demo data
+        return;
+      }
+      renderStats();
+      renderList();
+    });
+  </script>
+</body>
+
+</html>

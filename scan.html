@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scanning — ARFM</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .main {
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    .scan-wrap {
+      min-height: calc(100vh - 56px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scan-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(0, 232, 122, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 232, 122, 0.02) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black, transparent);
+    }
+
+    .scan-inner {
+      width: 100%;
+      max-width: 680px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Gate: not logged in */
+    .gate {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .gate h2 {
+      font-family: var(--display);
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .gate p {
+      color: var(--text-mid);
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+
+    /* Ready state */
+    .scan-ready {
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .scan-ready-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .scan-ready-header h2 {
+      font-family: var(--display);
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .scan-ready-header p {
+      font-size: 13px;
+      color: var(--text-mid);
+      font-weight: 300;
+    }
+
+    .user-info-bar {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .uib-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--green-dim);
+      border: 1px solid var(--green-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      overflow: hidden;
+    }
+
+    .uib-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .uib-info {
+      flex: 1;
+    }
+
+    .uib-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .uib-email {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .uib-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--green);
+    }
+
+    .uib-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    .scope-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .scope-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-mid);
+    }
+
+    .scope-badge {
+      padding: 2px 8px;
+      font-size: 10px;
+    }
+
+    .scan-start-btn {
+      width: 100%;
+      padding: 15px;
+      font-size: 14px;
+      font-family: var(--mono);
+      font-weight: 500;
+      justify-content: center;
+    }
+
+    .scan-privacy-note {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+
+    /* Scanning state */
+    .scan-active {
+      display: none;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .scan-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .scan-header h2 {
+      font-family: var(--display);
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .scan-header p {
+      font-size: 12px;
+      color: var(--text-mid);
+    }
+
+    .progress-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      padding: 28px 32px;
+      margin-bottom: 20px;
+    }
+
+    .progress-stage {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .progress-stage-text {
+      font-size: 12px;
+      color: var(--text-mid);
+    }
+
+    .progress-pct {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    .scan-counters {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .scan-count {
+      text-align: center;
+      padding: 12px 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+
+    .sc-val {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--green);
+      line-height: 1;
+    }
+
+    .sc-label {
+      font-size: 9px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Log terminal */
+    .scan-log {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      overflow: hidden;
+    }
+
+    .scan-log-bar {
+      background: var(--surface2);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .scan-log-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    .scan-log-title {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .scan-log-body {
+      height: 200px;
+      overflow-y: auto;
+      padding: 12px 14px;
+    }
+
+    .log-line {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 2px;
+    }
+
+    .log-line.new {
+      color: var(--green);
+    }
+
+    .log-line.warn {
+      color: var(--amber);
+    }
+
+    /* Complete state */
+    .scan-complete {
+      display: none;
+      text-align: center;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .complete-icon {
+      width: 72px;
+      height: 72px;
+      background: var(--green-dim);
+      border: 2px solid var(--green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 28px;
+      animation: scanPulse 2s ease-in-out 3;
+    }
+
+    .complete-h {
+      font-family: var(--display);
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .complete-p {
+      font-size: 13px;
+      color: var(--text-mid);
+      margin-bottom: 32px;
+      font-weight: 300;
+    }
+
+    .complete-stats {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 36px;
+      border: 1px solid var(--border);
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cs-stat {
+      flex: 1;
+      padding: 16px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .cs-stat:last-child {
+      border-right: none;
+    }
+
+    .cs-val {
+      font-family: var(--display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .cs-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="nav.js"></script>
+  <div class="main">
+    <div class="scan-wrap">
+      <div class="scan-inner">
+
+        <!-- GATE: not logged in -->
+        <div class="gate" id="gate" style="display:none">
+          <div style="font-size:48px;margin-bottom:16px;">🔐</div>
+          <h2>Connect your inbox first</h2>
+          <p>You need to authenticate with Google before scanning can begin.</p>
+          <a href="connect.html" class="btn btn-primary">Connect Gmail →</a>
+        </div>
+
+        <!-- READY STATE -->
+        <div class="scan-ready" id="scan-ready" style="display:none">
+          <div class="scan-ready-header">
+            <div class="section-label" style="justify-content:center;margin-bottom:14px;">Step 2 of 4</div>
+            <h2>Ready to scan your inbox</h2>
+            <p>Your browser will scan email headers locally. No content leaves your device.</p>
+          </div>
+
+          <div class="user-info-bar" id="user-info-bar">
+            <div class="uib-avatar" id="uib-avatar"><span>👤</span></div>
+            <div class="uib-info">
+              <div class="uib-name" id="uib-name">—</div>
+              <div class="uib-email" id="uib-email">—</div>
+            </div>
+            <div class="uib-status"><span class="uib-dot"></span>Connected</div>
+          </div>
+
+          <div class="scope-list">
+            <div class="scope-item"><span class="badge badge-green scope-badge">ALLOWED</span>Read email subject lines
+              &amp; sender metadata (local only)</div>
+            <div class="scope-item"><span class="badge badge-green scope-badge">ALLOWED</span>Extract sender domains for
+              company lookup</div>
+            <div class="scope-item"><span class="badge badge-red scope-badge">BLOCKED</span>Email body content — never
+              accessed</div>
+            <div class="scope-item"><span class="badge badge-red scope-badge">BLOCKED</span>Transmit inbox data to any
+              server</div>
+          </div>
+
+          <button class="btn btn-primary scan-start-btn" id="start-btn" onclick="startScan()">
+            Start Local Scan →
+          </button>
+          <div class="scan-privacy-note">🔒 Scanning happens in this browser tab only · No data is uploaded · ~1–2
+            minutes</div>
+        </div>
+
+        <!-- SCANNING STATE -->
+        <div class="scan-active" id="scan-active">
+          <div class="scan-header">
+            <div class="section-label" style="justify-content:center;margin-bottom:12px;">Scanning</div>
+            <h2>Analyzing your inbox</h2>
+            <p>Running locally in your browser · No data transmitted</p>
+          </div>
+
+          <div class="progress-card">
+            <div class="progress-stage">
+              <span class="progress-stage-text" id="stage-text">Connecting…</span>
+              <span class="progress-pct" id="pct-text">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+            <div class="scan-counters">
+              <div class="scan-count">
+                <div class="sc-val" id="cnt-emails">0</div>
+                <div class="sc-label">Emails</div>
+              </div>
+              <div class="scan-count">
+                <div class="sc-val" id="cnt-matches">0</div>
+                <div class="sc-label">Matches</div>
+              </div>
+              <div class="scan-count">
+                <div class="sc-val" id="cnt-domains">0</div>
+                <div class="sc-label">Domains</div>
+              </div>
+              <div class="scan-count">
+                <div class="sc-val" id="cnt-accounts">0</div>
+                <div class="sc-label">Accounts</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="scan-log">
+            <div class="scan-log-bar">
+              <div class="scan-log-dot"></div>
+              <span class="scan-log-title">Live Scan Log — Local Process Only</span>
+            </div>
+            <div class="scan-log-body" id="log-body"></div>
+          </div>
+        </div>
+
+        <!-- COMPLETE STATE -->
+        <div class="scan-complete" id="scan-complete">
+          <div class="complete-icon">✓</div>
+          <h2 class="complete-h">Scan complete</h2>
+          <p class="complete-p">Your digital footprint has been mapped.<br>Review the discovered accounts on your
+            dashboard.</p>
+          <div class="complete-stats">
+            <div class="cs-stat">
+              <div class="cs-val" id="cs-total">—</div>
+              <div class="cs-label">Accounts</div>
+            </div>
+            <div class="cs-stat">
+              <div class="cs-val" id="cs-high">—</div>
+              <div class="cs-label">High Risk</div>
+            </div>
+            <div class="cs-stat">
+              <div class="cs-val" id="cs-old">—</div>
+              <div class="cs-label">Pre-2020</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;justify-content:center;">
+            <a href="dashboard.html" class="btn btn-primary btn-lg">View Dashboard →</a>
+            <button onclick="startScan()" class="btn btn-outline btn-lg">Rescan</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let scanRunning = false;
+
+    // Init on load
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!AppState.user) {
+        document.getElementById('gate').style.display = 'block';
+        return;
+      }
+
+      // Fill user info
+      document.getElementById('scan-ready').style.display = 'block';
+      const u = AppState.user;
+      document.getElementById('uib-name').textContent = u.name || u.email;
+      document.getElementById('uib-email').textContent = u.email;
+      const av = document.getElementById('uib-avatar');
+      if (u.picture) av.innerHTML = `<img src="${u.picture}" alt="">`;
+
+      // If scan already done, show complete
+      if (AppState.scanComplete && AppState.accounts.length > 0) {
+        showComplete();
+      }
+    });
+
+    function addLog(msg, cls = '') {
+      const body = document.getElementById('log-body');
+      // Remove 'new' from previous
+      body.querySelectorAll('.new').forEach(el => el.classList.remove('new'));
+      const line = document.createElement('div');
+      line.className = 'log-line' + (cls ? ' ' + cls : '') + ' new';
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      body.appendChild(line);
+      while (body.children.length > 80) body.removeChild(body.firstChild);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    let logInterval;
+    function startFakeLogStream(accountsRef) {
+      const logMsgs = [
+        ['Checking header: From: noreply@accounts.google.com', ''],
+        ['Pattern match: "Welcome to" → confidence 0.94', ''],
+        ['Domain extracted: spotify.com → resolving...', ''],
+        ['Subject: "Verify your email" → match', ''],
+        ['Sender: no-reply@trello.com → transactional sender', ''],
+        ['Risk: mailchimp.com → HIGH (known data broker)', 'warn'],
+        ['Confidence: notion.so → 0.91', ''],
+        ['Signup detected: zapier.com (2018-08)', ''],
+        ['Scanning message batch 3 of 12...', ''],
+        ['Keyword: "Account created" → match', ''],
+        ['DPO lookup: figma.com → privacy@figma.com', 'new'],
+      ];
+      let i = 0;
+      logInterval = setInterval(() => {
+        const [msg, cls] = logMsgs[i % logMsgs.length];
+        addLog(msg, cls);
+        // Update fake counters
+        const pct = parseInt(document.getElementById('pct-text').textContent) || 0;
+        document.getElementById('cnt-emails').textContent = Math.floor(pct * 8.5);
+        document.getElementById('cnt-matches').textContent = Math.floor(pct * 0.45);
+        document.getElementById('cnt-domains').textContent = Math.floor(pct * 0.18);
+        document.getElementById('cnt-accounts').textContent = accountsRef.length || Math.floor(pct * 0.12);
+        i++;
+      }, 350);
+    }
+
+    async function startScan() {
+      if (scanRunning) return;
+      scanRunning = true;
+
+      const accountsRef = { length: 0 };
+
+      // Switch views
+      document.getElementById('scan-ready').style.display = 'none';
+      document.getElementById('scan-complete').style.display = 'none';
+      document.getElementById('scan-active').style.display = 'block';
+      document.getElementById('log-body').innerHTML = '';
+
+      addLog('Starting local scan engine...');
+      addLog('OAuth scope: gmail.readonly (metadata only)');
+      startFakeLogStream(accountsRef);
+
+      try {
+        const accounts = await GmailScanner.scan(
+          AppState.user.accessToken,
+          ({ stage, current }) => {
+            document.getElementById('stage-text').textContent = stage;
+            document.getElementById('pct-text').textContent = current + '%';
+            document.getElementById('progress-fill').style.width = current + '%';
+            accountsRef.length = accounts?.length || 0;
+          }
+        );
+
+        clearInterval(logInterval);
+        addLog(`✓ Scan complete — ${accounts.length} accounts discovered.`, 'new');
+
+        AppState.accounts = accounts;
+        AppState.scanComplete = true;
+        AppState.save();
+
+        // Final counter update
+        document.getElementById('cnt-accounts').textContent = accounts.length;
+        document.getElementById('cnt-domains').textContent = accounts.length;
+
+        await new Promise(r => setTimeout(r, 800));
+
+        // Switch to complete
+        document.getElementById('scan-active').style.display = 'none';
+        document.getElementById('scan-complete').style.display = 'block';
+        showComplete();
+        showToast(`${accounts.length} accounts discovered!`, 'success');
+
+      } catch (e) {
+        clearInterval(logInterval);
+        addLog('Error: ' + e.message, 'warn');
+        showToast('Scan failed: ' + e.message, 'error');
+        scanRunning = false;
+        document.getElementById('scan-active').style.display = 'none';
+        document.getElementById('scan-ready').style.display = 'block';
+      }
+
+      scanRunning = false;
+    }
+
+    function showComplete() {
+      document.getElementById('scan-ready').style.display = 'none';
+      document.getElementById('scan-active').style.display = 'none';
+      document.getElementById('scan-complete').style.display = 'block';
+
+      const acc = AppState.accounts;
+      document.getElementById('cs-total').textContent = acc.length;
+      document.getElementById('cs-high').textContent = acc.filter(a => a.riskScore === 'High').length;
+      document.getElementById('cs-old').textContent = acc.filter(a => a.signupDate && a.signupDate < '2020').length;
+    }
+  </script>
+</body>
+
+</html>

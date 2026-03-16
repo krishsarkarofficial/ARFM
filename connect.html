@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect — ARFM</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .main {
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .connect-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .connect-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(0, 232, 122, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 232, 122, 0.025) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent);
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: var(--green);
+      opacity: 0.08;
+      top: -100px;
+      right: -100px;
+    }
+
+    .orb-2 {
+      width: 300px;
+      height: 300px;
+      background: var(--blue);
+      opacity: 0.06;
+      bottom: -80px;
+      left: -80px;
+    }
+
+    .connect-box {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      z-index: 2;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    /* Step indicator */
+    .steps-indicator {
+      display: flex;
+      gap: 0;
+      margin-bottom: 40px;
+    }
+
+    .si-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .si-step::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      right: -50%;
+      height: 1px;
+      background: var(--border);
+      z-index: 0;
+    }
+
+    .si-step:last-child::after {
+      display: none;
+    }
+
+    .si-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      z-index: 1;
+      background: var(--bg);
+      transition: all 0.3s;
+    }
+
+    .si-step.active .si-num {
+      border-color: var(--green);
+      color: var(--green);
+      background: var(--green-dim);
+    }
+
+    .si-step.done .si-num {
+      border-color: var(--green);
+      color: #000;
+      background: var(--green);
+    }
+
+    .si-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .si-step.active .si-label {
+      color: var(--green);
+    }
+
+    /* Cards */
+    .connect-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+    }
+
+    .connect-card-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .connect-card-title {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .connect-card-sub {
+      font-size: 12px;
+      color: var(--text-mid);
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    .connect-card-body {
+      padding: 24px 28px;
+    }
+
+    /* Google button */
+    .google-btn-wrap {
+      margin-bottom: 20px;
+    }
+
+    .btn-google-full {
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.25s;
+      letter-spacing: 0.03em;
+    }
+
+    .btn-google-full:hover {
+      border-color: var(--green);
+      background: var(--green-dim);
+      box-shadow: 0 0 28px rgba(0, 232, 122, 0.08);
+    }
+
+    .btn-google-full:active {
+      transform: scale(0.99);
+    }
+
+    .btn-google-full .g-logo {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .btn-google-full.loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Permission chips */
+    .perms {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-mid);
+    }
+
+    .perm-check {
+      width: 18px;
+      height: 18px;
+      background: var(--green-dim);
+      border: 1px solid var(--green-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--green);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .perm-no {
+      width: 18px;
+      height: 18px;
+      background: var(--red-dim);
+      border: 1px solid rgba(255, 68, 85, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--red);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Privacy note */
+    .privacy-note {
+      background: var(--green-dim);
+      border: 1px solid var(--green-mid);
+      padding: 14px 16px;
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 11px;
+      color: var(--text-mid);
+      line-height: 1.6;
+    }
+
+    .privacy-note-icon {
+      color: var(--green);
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Config hint */
+    .config-hint {
+      background: var(--amber-dim);
+      border: 1px solid rgba(255, 184, 0, 0.25);
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      color: var(--amber);
+      line-height: 1.6;
+      display: none;
+    }
+
+    /* Already logged in state */
+    .already-logged {
+      display: none;
+      text-align: center;
+      padding: 32px 0;
+    }
+
+    .al-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid var(--green);
+      margin: 0 auto 16px;
+      overflow: hidden;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .al-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .al-name {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .al-email {
+      font-size: 12px;
+      color: var(--text-mid);
+      margin-bottom: 24px;
+    }
+
+    .al-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="nav.js"></script>
+  <div class="main">
+    <div class="connect-wrap">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="connect-box">
+
+        <!-- Step indicator -->
+        <div class="steps-indicator">
+          <div class="si-step active" id="step-1">
+            <div class="si-num">1</div>
+            <div class="si-label">Connect</div>
+          </div>
+          <div class="si-step" id="step-2">
+            <div class="si-num">2</div>
+            <div class="si-label">Scan</div>
+          </div>
+          <div class="si-step" id="step-3">
+            <div class="si-num">3</div>
+            <div class="si-label">Review</div>
+          </div>
+          <div class="si-step" id="step-4">
+            <div class="si-num">4</div>
+            <div class="si-label">Delete</div>
+          </div>
+        </div>
+
+        <!-- Client ID config hint -->
+        <div class="config-hint" id="config-hint">
+          ⚠ No Google Client ID configured. Using demo mode with mock data.
+          To use real Gmail scanning, add your Client ID to <code>app.js</code> → <code>GOOGLE_CLIENT_ID</code>.
+        </div>
+
+        <!-- Login card -->
+        <div class="connect-card" id="login-card">
+          <div class="connect-card-header">
+            <div class="connect-card-title">Connect your inbox</div>
+            <div class="connect-card-sub">Authenticate with Google to begin scanning. We use read-only access — your
+              email content is never transmitted.</div>
+          </div>
+          <div class="connect-card-body">
+
+            <div class="google-btn-wrap">
+              <button class="btn-google-full" id="google-btn" onclick="startGoogleOAuth()">
+                <svg class="g-logo" viewBox="0 0 24 24">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4" />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853" />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05" />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335" />
+                </svg>
+                Continue with Google
+              </button>
+            </div>
+
+            <div class="perms">
+              <div
+                style="font-size:10px;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">
+                Permissions requested:</div>
+              <div class="perm-item">
+                <div class="perm-check">✓</div>Read email subject lines &amp; sender metadata
+              </div>
+              <div class="perm-item">
+                <div class="perm-check">✓</div>Read your email address &amp; name
+              </div>
+              <div class="perm-item">
+                <div class="perm-no">✕</div>Access email body content
+              </div>
+              <div class="perm-item">
+                <div class="perm-no">✕</div>Send emails on your behalf
+              </div>
+              <div class="perm-item">
+                <div class="perm-no">✕</div>Store or transmit any inbox data
+              </div>
+            </div>
+
+            <div class="privacy-note">
+              <span class="privacy-note-icon">🔒</span>
+              <span>All inbox scanning happens <strong style="color:var(--green)">entirely in your browser</strong>.
+                Email headers are processed locally using JavaScript — nothing is uploaded to our servers. Your OAuth
+                token is stored only in session memory and expires when you close the tab.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Already logged in card -->
+        <div class="connect-card" id="logged-card" style="display:none">
+          <div class="connect-card-header">
+            <div class="connect-card-title">Already connected</div>
+            <div class="connect-card-sub">You're signed in and ready to scan your inbox.</div>
+          </div>
+          <div class="connect-card-body">
+            <div class="already-logged" id="already-logged" style="display:block">
+              <div class="al-avatar" id="al-avatar"><span>👤</span></div>
+              <div class="al-name" id="al-name">—</div>
+              <div class="al-email" id="al-email">—</div>
+              <div class="al-actions">
+                <a href="scan.html" class="btn btn-primary" style="justify-content:center;">Continue to Scan →</a>
+                <a href="dashboard.html" class="btn btn-outline" style="justify-content:center;">View Dashboard</a>
+                <button class="btn btn-ghost" onclick="handleSignOut()"
+                  style="font-size:11px;color:var(--text-dim);margin-top:4px;">Sign out &amp; clear data</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Show config hint if no real client ID
+    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
+      document.getElementById('config-hint').style.display = 'block';
+    }
+
+    // Check if already logged in
+    if (AppState.user) {
+      showLoggedIn(AppState.user);
+    }
+
+    function showLoggedIn(user) {
+      document.getElementById('login-card').style.display = 'none';
+      document.getElementById('logged-card').style.display = 'block';
+      document.getElementById('al-name').textContent = user.name || user.email;
+      document.getElementById('al-email').textContent = user.email;
+      const avatar = document.getElementById('al-avatar');
+      if (user.picture) {
+        avatar.innerHTML = `<img src="${user.picture}" alt="${user.name}">`;
+      }
+    }
+
+    function startGoogleOAuth() {
+      const btn = document.getElementById('google-btn');
+      btn.classList.add('loading');
+      btn.textContent = 'Connecting…';
+
+      OAuth.login(
+        (user) => {
+          showToast('Connected as ' + user.email, 'success');
+          showLoggedIn(user);
+          setNavActive();
+          setTimeout(() => location.href = 'scan.html', 1200);
+        },
+        (err) => {
+          btn.classList.remove('loading');
+          btn.innerHTML = `<svg class="g-logo" viewBox="0 0 24 24">...</svg>Continue with Google`;
+          location.reload();
+        }
+      );
+    }
+
+    function handleSignOut() {
+      OAuth.logout();
+    }
+  </script>
+  <script async defer src="https://accounts.google.com/gsi/client" onload="OAuth.init()"></script>
+</body>
+
+</html>

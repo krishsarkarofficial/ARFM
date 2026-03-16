@@ -1,0 +1,314 @@
+{
+    "facebook.com": {
+        "name": "Facebook",
+        "category": "social",
+        "risk": 0.9,
+        "deletion_email": "datarequests@support.facebook.com"
+    },
+    "instagram.com": {
+        "name": "Instagram",
+        "category": "social",
+        "risk": 0.85,
+        "deletion_email": "datarequests@support.facebook.com"
+    },
+    "twitter.com": {
+        "name": "Twitter / X",
+        "category": "social",
+        "risk": 0.8,
+        "deletion_email": "privacy@twitter.com"
+    },
+    "x.com": {
+        "name": "X (formerly Twitter)",
+        "category": "social",
+        "risk": 0.8,
+        "deletion_email": "privacy@x.com"
+    },
+    "linkedin.com": {
+        "name": "LinkedIn",
+        "category": "social",
+        "risk": 0.75,
+        "deletion_email": "DPO@linkedin.com"
+    },
+    "pinterest.com": {
+        "name": "Pinterest",
+        "category": "social",
+        "risk": 0.6,
+        "deletion_email": "privacy-support@pinterest.com"
+    },
+    "reddit.com": {
+        "name": "Reddit",
+        "category": "social",
+        "risk": 0.65,
+        "deletion_email": "support@reddit.com"
+    },
+    "tiktok.com": {
+        "name": "TikTok",
+        "category": "social",
+        "risk": 0.9,
+        "deletion_email": "privacy@tiktok.com"
+    },
+    "snapchat.com": {
+        "name": "Snapchat",
+        "category": "social",
+        "risk": 0.7,
+        "deletion_email": "privacy@snap.com"
+    },
+    "tumblr.com": {
+        "name": "Tumblr",
+        "category": "social",
+        "risk": 0.5,
+        "deletion_email": "privacy@tumblr.com"
+    },
+    "discord.com": {
+        "name": "Discord",
+        "category": "social",
+        "risk": 0.65,
+        "deletion_email": "privacy@discord.com"
+    },
+    "amazon.com": {
+        "name": "Amazon",
+        "category": "shopping",
+        "risk": 0.85,
+        "deletion_email": "privacy@amazon.com"
+    },
+    "ebay.com": {
+        "name": "eBay",
+        "category": "shopping",
+        "risk": 0.7,
+        "deletion_email": "privacy@ebay.com"
+    },
+    "shopify.com": {
+        "name": "Shopify",
+        "category": "shopping",
+        "risk": 0.5,
+        "deletion_email": "privacy@shopify.com"
+    },
+    "etsy.com": {
+        "name": "Etsy",
+        "category": "shopping",
+        "risk": 0.5,
+        "deletion_email": "legal@etsy.com"
+    },
+    "walmart.com": {
+        "name": "Walmart",
+        "category": "shopping",
+        "risk": 0.6,
+        "deletion_email": "privacy@walmart.com"
+    },
+    "aliexpress.com": {
+        "name": "AliExpress",
+        "category": "shopping",
+        "risk": 0.8,
+        "deletion_email": "DataProtection@service.alibaba.com"
+    },
+    "paypal.com": {
+        "name": "PayPal",
+        "category": "finance",
+        "risk": 0.9,
+        "deletion_email": "DPO@paypal.com"
+    },
+    "stripe.com": {
+        "name": "Stripe",
+        "category": "finance",
+        "risk": 0.7,
+        "deletion_email": "privacy@stripe.com"
+    },
+    "venmo.com": {
+        "name": "Venmo",
+        "category": "finance",
+        "risk": 0.8,
+        "deletion_email": "DPO@paypal.com"
+    },
+    "robinhood.com": {
+        "name": "Robinhood",
+        "category": "finance",
+        "risk": 0.85,
+        "deletion_email": "privacy@robinhood.com"
+    },
+    "coinbase.com": {
+        "name": "Coinbase",
+        "category": "finance",
+        "risk": 0.85,
+        "deletion_email": "dpo@coinbase.com"
+    },
+    "github.com": {
+        "name": "GitHub",
+        "category": "tech",
+        "risk": 0.6,
+        "deletion_email": "privacy@github.com"
+    },
+    "gitlab.com": {
+        "name": "GitLab",
+        "category": "tech",
+        "risk": 0.5,
+        "deletion_email": "DPO@gitlab.com"
+    },
+    "stackoverflow.com": {
+        "name": "Stack Overflow",
+        "category": "tech",
+        "risk": 0.4,
+        "deletion_email": "privacy@stackoverflow.com"
+    },
+    "slack.com": {
+        "name": "Slack",
+        "category": "tech",
+        "risk": 0.5,
+        "deletion_email": "privacy@slack.com"
+    },
+    "notion.so": {
+        "name": "Notion",
+        "category": "tech",
+        "risk": 0.5,
+        "deletion_email": "team@makenotion.com"
+    },
+    "trello.com": {
+        "name": "Trello",
+        "category": "tech",
+        "risk": 0.4,
+        "deletion_email": "privacy@atlassian.com"
+    },
+    "atlassian.com": {
+        "name": "Atlassian",
+        "category": "tech",
+        "risk": 0.45,
+        "deletion_email": "privacy@atlassian.com"
+    },
+    "figma.com": {
+        "name": "Figma",
+        "category": "tech",
+        "risk": 0.45,
+        "deletion_email": "privacy@figma.com"
+    },
+    "spotify.com": {
+        "name": "Spotify",
+        "category": "media",
+        "risk": 0.6,
+        "deletion_email": "privacy@spotify.com"
+    },
+    "netflix.com": {
+        "name": "Netflix",
+        "category": "media",
+        "risk": 0.55,
+        "deletion_email": "privacyoffice@netflix.com"
+    },
+    "twitch.tv": {
+        "name": "Twitch",
+        "category": "media",
+        "risk": 0.6,
+        "deletion_email": "privacy@twitch.tv"
+    },
+    "medium.com": {
+        "name": "Medium",
+        "category": "media",
+        "risk": 0.4,
+        "deletion_email": "privacy@medium.com"
+    },
+    "substack.com": {
+        "name": "Substack",
+        "category": "media",
+        "risk": 0.35,
+        "deletion_email": "privacy@substack.com"
+    },
+    "dropbox.com": {
+        "name": "Dropbox",
+        "category": "cloud",
+        "risk": 0.7,
+        "deletion_email": "privacy@dropbox.com"
+    },
+    "box.com": {
+        "name": "Box",
+        "category": "cloud",
+        "risk": 0.6,
+        "deletion_email": "privacy@box.com"
+    },
+    "mega.nz": {
+        "name": "MEGA",
+        "category": "cloud",
+        "risk": 0.55,
+        "deletion_email": "privacy@mega.nz"
+    },
+    "coursera.org": {
+        "name": "Coursera",
+        "category": "education",
+        "risk": 0.35,
+        "deletion_email": "privacy@coursera.org"
+    },
+    "udemy.com": {
+        "name": "Udemy",
+        "category": "education",
+        "risk": 0.35,
+        "deletion_email": "privacy@udemy.com"
+    },
+    "edx.org": {
+        "name": "edX",
+        "category": "education",
+        "risk": 0.3,
+        "deletion_email": "privacy@edx.org"
+    },
+    "duolingo.com": {
+        "name": "Duolingo",
+        "category": "education",
+        "risk": 0.3,
+        "deletion_email": "privacy@duolingo.com"
+    },
+    "uber.com": {
+        "name": "Uber",
+        "category": "travel",
+        "risk": 0.75,
+        "deletion_email": "privacy@uber.com"
+    },
+    "lyft.com": {
+        "name": "Lyft",
+        "category": "travel",
+        "risk": 0.7,
+        "deletion_email": "privacy@lyft.com"
+    },
+    "airbnb.com": {
+        "name": "Airbnb",
+        "category": "travel",
+        "risk": 0.7,
+        "deletion_email": "dpo@airbnb.com"
+    },
+    "booking.com": {
+        "name": "Booking.com",
+        "category": "travel",
+        "risk": 0.65,
+        "deletion_email": "dataprotectionoffice@booking.com"
+    },
+    "doordash.com": {
+        "name": "DoorDash",
+        "category": "food",
+        "risk": 0.6,
+        "deletion_email": "privacy@doordash.com"
+    },
+    "grubhub.com": {
+        "name": "Grubhub",
+        "category": "food",
+        "risk": 0.55,
+        "deletion_email": "privacy@grubhub.com"
+    },
+    "ubereats.com": {
+        "name": "Uber Eats",
+        "category": "food",
+        "risk": 0.65,
+        "deletion_email": "privacy@uber.com"
+    },
+    "zoom.us": {
+        "name": "Zoom",
+        "category": "tech",
+        "risk": 0.55,
+        "deletion_email": "privacy@zoom.us"
+    },
+    "canva.com": {
+        "name": "Canva",
+        "category": "tech",
+        "risk": 0.4,
+        "deletion_email": "privacy@canva.com"
+    },
+    "adobe.com": {
+        "name": "Adobe",
+        "category": "tech",
+        "risk": 0.6,
+        "deletion_email": "privacy@adobe.com"
+    }
+}

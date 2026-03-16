@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tracker — ARFM</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .main {
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    .tracker-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 32px;
+    }
+
+    /* Summary cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .sum-card {
+      background: var(--surface);
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sum-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .sum-card.c-amber::after {
+      background: var(--amber);
+    }
+
+    .sum-card.c-blue::after {
+      background: var(--blue);
+    }
+
+    .sum-card.c-green::after {
+      background: var(--green);
+    }
+
+    .sum-card.c-red::after {
+      background: var(--red);
+    }
+
+    .sum-val {
+      font-family: var(--display);
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .c-amber .sum-val {
+      color: var(--amber);
+    }
+
+    .c-blue .sum-val {
+      color: var(--blue);
+    }
+
+    .c-green .sum-val {
+      color: var(--green);
+    }
+
+    .c-red .sum-val {
+      color: var(--red);
+    }
+
+    .sum-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .sum-icon {
+      position: absolute;
+      bottom: 14px;
+      right: 16px;
+      font-size: 32px;
+      opacity: 0.12;
+    }
+
+    /* Activity feed layout */
+    .tracker-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+    }
+
+    /* Timeline */
+    .timeline-panel {}
+
+    .tp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .tp-title {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .tp-filter {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tf-btn {
+      padding: 4px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.06em;
+    }
+
+    .tf-btn.active {
+      border-color: var(--green);
+      color: var(--green);
+      background: var(--green-dim);
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .tl-item {
+      display: flex;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      border-radius: 2px;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+
+    .tl-item:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tl-item:last-child {
+      border-bottom: none;
+    }
+
+    .tl-icon-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      padding-top: 2px;
+    }
+
+    .tl-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      border: 1px solid;
+    }
+
+    .tl-dot.pending {
+      background: var(--amber-dim);
+      border-color: rgba(255, 184, 0, 0.3);
+      color: var(--amber);
+    }
+
+    .tl-dot.sent {
+      background: var(--blue-dim);
+      border-color: rgba(74, 143, 255, 0.3);
+      color: var(--blue);
+    }
+
+    .tl-dot.complete {
+      background: var(--green-dim);
+      border-color: var(--green-mid);
+      color: var(--green);
+    }
+
+    .tl-dot.noresponse {
+      background: var(--surface2);
+      border-color: var(--border2);
+      color: var(--text-dim);
+    }
+
+    .tl-dot.verify {
+      background: rgba(255, 68, 85, 0.08);
+      border-color: rgba(255, 68, 85, 0.25);
+      color: var(--red);
+    }
+
+    .tl-line {
+      width: 1px;
+      flex: 1;
+      background: var(--border);
+      margin-top: 4px;
+      min-height: 20px;
+    }
+
+    .tl-content {
+      flex: 1;
+    }
+
+    .tl-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .tl-company {
+      font-weight: 500;
+      font-size: 14px;
+      font-family: var(--display);
+    }
+
+    .tl-domain {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 1px;
+    }
+
+    .tl-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .tl-date {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .tl-status {
+      font-size: 11px;
+    }
+
+    .tl-body {
+      font-size: 12px;
+      color: var(--text-mid);
+      line-height: 1.5;
+      margin-bottom: 10px;
+      font-weight: 300;
+    }
+
+    .tl-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tl-action {
+      padding: 4px 12px;
+      font-family: var(--mono);
+      font-size: 10px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      transition: all 0.2s;
+    }
+
+    .tl-action:hover {
+      border-color: var(--border2);
+      color: var(--text-mid);
+    }
+
+    .tl-action.primary {
+      border-color: var(--green);
+      color: var(--green);
+      background: var(--green-dim);
+    }
+
+    /* Deadline badge */
+    .deadline-warn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--red);
+      background: var(--red-dim);
+      border: 1px solid rgba(255, 68, 85, 0.25);
+      padding: 2px 8px;
+    }
+
+    .deadline-ok {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--text-dim);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+    }
+
+    /* Right panel: summary + deadline */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .rp-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+    }
+
+    .rp-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-mid);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .rp-body {
+      padding: 14px 16px;
+    }
+
+    /* Deadline list */
+    .deadline-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .deadline-item:last-child {
+      border-bottom: none;
+    }
+
+    .di-company {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .di-days {
+      font-family: var(--display);
+      font-size: 18px;
+      font-weight: 700;
+      min-width: 32px;
+      text-align: right;
+    }
+
+    .di-days.urgent {
+      color: var(--red);
+    }
+
+    .di-days.soon {
+      color: var(--amber);
+    }
+
+    .di-days.ok {
+      color: var(--green);
+    }
+
+    .di-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      min-width: 24px;
+    }
+
+    /* Compliance chart */
+    .comp-ring-wrap {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 16px 0;
+    }
+
+    .comp-ring {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .comp-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .comp-ring-pct {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .comp-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cl-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-mid);
+    }
+
+    .cl-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Empty state */
+    .tracker-empty {
+      text-align: center;
+      padding: 80px 20px;
+      grid-column: 1/-1;
+    }
+
+    .tracker-empty h3 {
+      font-family: var(--display);
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .tracker-empty p {
+      font-size: 13px;
+      color: var(--text-mid);
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .tracker-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .tracker-wrap {
+        padding: 24px 16px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <script src="nav.js"></script>
+  <div class="main">
+    <div class="tracker-wrap">
+
+      <!-- Header -->
+      <div style="margin-bottom:24px;">
+        <div class="section-label">Response Tracker</div>
+        <h1
+          style="font-family:var(--display);font-size:32px;font-weight:600;letter-spacing:-0.025em;margin-bottom:6px;">
+          Deletion Tracker</h1>
+        <p style="font-size:12px;color:var(--text-dim);">Monitor company responses and track your deletion request
+          progress.</p>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary-grid">
+        <div class="sum-card c-amber">
+          <div class="sum-val" id="sc-pending">—</div>
+          <div class="sum-label">Awaiting Response</div>
+          <div class="sum-icon">📬</div>
+        </div>
+        <div class="sum-card c-blue">
+          <div class="sum-val" id="sc-sent">—</div>
+          <div class="sum-label">Requests Sent</div>
+          <div class="sum-icon">→</div>
+        </div>
+        <div class="sum-card c-green">
+          <div class="sum-val" id="sc-complete">—</div>
+          <div class="sum-label">Deletion Confirmed</div>
+          <div class="sum-icon">✓</div>
+        </div>
+        <div class="sum-card c-red">
+          <div class="sum-val" id="sc-overdue">—</div>
+          <div class="sum-label">Overdue (30+ days)</div>
+          <div class="sum-icon">⚠</div>
+        </div>
+      </div>
+
+      <!-- Main layout -->
+      <div class="tracker-layout" id="tracker-layout">
+
+        <!-- Timeline -->
+        <div class="timeline-panel">
+          <div class="tp-header">
+            <div class="tp-title">Activity</div>
+            <div class="tp-filter">
+              <button class="tf-btn active" data-f="all" onclick="setFilter('all',this)">All</button>
+              <button class="tf-btn" data-f="sent" onclick="setFilter('sent',this)">Sent</button>
+              <button class="tf-btn" data-f="complete" onclick="setFilter('complete',this)">Done</button>
+              <button class="tf-btn" data-f="pending" onclick="setFilter('pending',this)">Pending</button>
+            </div>
+          </div>
+          <div class="timeline" id="timeline"></div>
+        </div>
+
+        <!-- Right panel -->
+        <div class="right-panel">
+
+          <!-- Compliance ring -->
+          <div class="rp-card">
+            <div class="rp-header">Compliance Progress</div>
+            <div class="rp-body">
+              <div class="comp-ring-wrap">
+                <div class="comp-ring">
+                  <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="32" fill="none" stroke="var(--border2)" stroke-width="8" />
+                    <circle cx="40" cy="40" r="32" fill="none" stroke="var(--green)" stroke-width="8"
+                      stroke-dasharray="201" stroke-dashoffset="201" id="ring-fill" stroke-linecap="round"
+                      style="transition:stroke-dashoffset 1s ease" />
+                  </svg>
+                  <div class="comp-ring-pct" id="ring-pct">0%</div>
+                </div>
+                <div class="comp-legend">
+                  <div class="cl-item">
+                    <div class="cl-dot" style="background:var(--green)"></div>Completed
+                  </div>
+                  <div class="cl-item">
+                    <div class="cl-dot" style="background:var(--blue)"></div>In progress
+                  </div>
+                  <div class="cl-item">
+                    <div class="cl-dot" style="background:var(--amber)"></div>Pending
+                  </div>
+                  <div class="cl-item">
+                    <div class="cl-dot" style="background:var(--red)"></div>Overdue
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:12px;color:var(--text-mid);line-height:1.6;font-weight:300;" id="ring-desc">—</div>
+            </div>
+          </div>
+
+          <!-- Deadline tracker -->
+          <div class="rp-card">
+            <div class="rp-header">Response Deadlines</div>
+            <div class="rp-body" id="deadline-list">
+              <div style="font-size:12px;color:var(--text-dim);text-align:center;padding:20px 0;">No active requests
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="rp-card">
+            <div class="rp-header">Quick Actions</div>
+            <div class="rp-body" style="display:flex;flex-direction:column;gap:8px;">
+              <a href="requests.html" class="btn btn-outline" style="justify-content:center;font-size:12px;">+ New
+                Deletion Request</a>
+              <a href="dashboard.html" class="btn btn-ghost" style="justify-content:center;font-size:12px;">View All
+                Accounts</a>
+              <button class="btn btn-ghost" style="font-size:12px;" onclick="exportCSV()">↓ Export Report</button>
+              <button class="btn btn-danger" style="font-size:11px;" onclick="clearAllData()">🗑 Clear All Data</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let tlFilter = 'all';
+
+    // Add some mock tracker data if requests are empty but accounts exist
+    function seedMockRequests() {
+      if (!AppState.accounts.length) return;
+      const mockRequests = {
+        'acc_0': { status: 'sent', sentAt: daysAgo(12), regulation: 'gdpr' },
+        'acc_4': { status: 'complete', sentAt: daysAgo(35), regulation: 'gdpr', response: 'Deletion confirmed by Mailchimp privacy team.', respondedAt: daysAgo(10) },
+        'acc_9': { status: 'sent', sentAt: daysAgo(28), regulation: 'gdpr' }, // overdue
+        'acc_11': { status: 'sent', sentAt: daysAgo(5), regulation: 'ccpa' },
+      };
+      let changed = false;
+      Object.entries(mockRequests).forEach(([id, req]) => {
+        if (!AppState.requests[id]) { AppState.requests[id] = req; changed = true; }
+      });
+      if (changed) AppState.save();
+    }
+
+    function daysAgo(n) {
+      const d = new Date(); d.setDate(d.getDate() - n);
+      return d.toISOString();
+    }
+
+    function daysSince(isoStr) {
+      return Math.floor((Date.now() - new Date(isoStr).getTime()) / 86400000);
+    }
+
+    function daysRemaining(sentAt, limit = 30) {
+      return limit - daysSince(sentAt);
+    }
+
+    function renderSummary() {
+      const reqs = Object.entries(AppState.requests);
+      const sent = reqs.filter(([, r]) => r.status === 'sent').length;
+      const complete = reqs.filter(([, r]) => r.status === 'complete').length;
+      const overdue = reqs.filter(([, r]) => r.status === 'sent' && daysSince(r.sentAt) > 30).length;
+      const pending = AppState.accounts.filter(a => !AppState.requests[a.id]).length;
+
+      document.getElementById('sc-pending').textContent = pending;
+      document.getElementById('sc-sent').textContent = sent;
+      document.getElementById('sc-complete').textContent = complete;
+      document.getElementById('sc-overdue').textContent = overdue;
+
+      // Ring
+      const total = AppState.accounts.length;
+      const pct = total > 0 ? Math.round((complete / total) * 100) : 0;
+      const circumference = 201;
+      const offset = circumference - (circumference * pct / 100);
+      document.getElementById('ring-fill').style.strokeDashoffset = offset;
+      document.getElementById('ring-pct').textContent = pct + '%';
+      document.getElementById('ring-desc').textContent = `${complete} of ${total} accounts have confirmed deletion. ${sent} requests in progress.`;
+    }
+
+    function renderDeadlines() {
+      const items = Object.entries(AppState.requests)
+        .filter(([, r]) => r.status === 'sent')
+        .map(([id, r]) => {
+          const acc = AppState.accounts.find(a => a.id === id);
+          const days = daysRemaining(r.sentAt, r.regulation === 'ccpa' ? 45 : 30);
+          return { id, acc, days, sentAt: r.sentAt };
+        })
+        .sort((a, b) => a.days - b.days);
+
+      const el = document.getElementById('deadline-list');
+      if (!items.length) {
+        el.innerHTML = '<div style="font-size:12px;color:var(--text-dim);text-align:center;padding:20px 0;">No active requests</div>';
+        return;
+      }
+      el.innerHTML = items.slice(0, 6).map(({ acc, days }) => `
+    <div class="deadline-item">
+      <div class="di-company">${acc?.company || 'Unknown'}</div>
+      <div>
+        <div class="di-days ${days < 0 ? 'urgent' : days < 7 ? 'soon' : 'ok'}">${Math.abs(days)}</div>
+        <div class="di-label">${days < 0 ? 'overdue' : 'days left'}</div>
+      </div>
+    </div>
+  `).join('');
+    }
+
+    function getStatusInfo(status, sentAt, reg) {
+      const days = sentAt ? daysSince(sentAt) : 0;
+      const limit = reg === 'ccpa' ? 45 : 30;
+      const remaining = limit - days;
+      const isOverdue = status === 'sent' && remaining < 0;
+
+      const icons = { sent: '→', complete: '✓', verify: '🔐', noresponse: '○', pending: '⬡' };
+      const msgs = {
+        sent: `Request sent ${days} day${days !== 1 ? 's' : ''} ago. Company has ${remaining > 0 ? remaining + ' days' : 'OVERDUE'} to respond.`,
+        complete: 'Deletion confirmed by company.',
+        verify: 'Company requires identity verification before deletion.',
+        noresponse: 'No response received. Consider escalating.',
+        pending: 'Deletion request not yet sent.',
+      };
+
+      return {
+        icon: icons[isOverdue ? 'noresponse' : status] || '○',
+        dotCls: isOverdue ? 'noresponse' : status,
+        msg: msgs[isOverdue ? 'noresponse' : status] || '',
+        isOverdue,
+        remaining,
+      };
+    }
+
+    function renderTimeline() {
+      const el = document.getElementById('timeline');
+
+      // Build combined list: sent requests + unsent accounts
+      let items = [];
+
+      // Sent/complete requests
+      Object.entries(AppState.requests).forEach(([id, req]) => {
+        const acc = AppState.accounts.find(a => a.id === id);
+        if (!acc) return;
+        if (tlFilter !== 'all' && req.status !== tlFilter) return;
+        items.push({ acc, req, date: req.respondedAt || req.sentAt });
+      });
+
+      // Pending (no request sent) — only show in 'all' and 'pending' filters
+      if (tlFilter === 'all' || tlFilter === 'pending') {
+        AppState.accounts.filter(a => !AppState.requests[a.id]).forEach(acc => {
+          items.push({ acc, req: { status: 'pending' }, date: null });
+        });
+      }
+
+      // Sort: most recent first
+      items.sort((a, b) => {
+        if (!a.date && !b.date) return 0;
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return new Date(b.date) - new Date(a.date);
+      });
+
+      if (!items.length) {
+        el.innerHTML = '<div class="tracker-empty"><h3>No activity yet</h3><p>Send some deletion requests to start tracking.</p><a href="requests.html" class="btn btn-primary">Generate Requests →</a></div>';
+        return;
+      }
+
+      el.innerHTML = items.map(({ acc, req }, i) => {
+        const { icon, dotCls, msg, isOverdue, remaining } = getStatusInfo(req.status, req.sentAt, req.regulation);
+        const sentDays = req.sentAt ? daysSince(req.sentAt) : null;
+        const dateStr = req.sentAt ? new Date(req.sentAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+        const deadline = req.status === 'sent' ? (isOverdue
+          ? `<span class="deadline-warn">⚠ Overdue by ${Math.abs(remaining)} days</span>`
+          : `<span class="deadline-ok">${remaining} days remaining</span>`)
+          : '';
+
+        const actions = req.status === 'sent' ? `
+      <button class="tl-action primary" onclick="markComplete('${acc.id}')">✓ Mark Complete</button>
+      <button class="tl-action" onclick="sendFollowUp('${acc.id}')">↺ Send Follow-Up</button>
+      <button class="tl-action" onclick="openReq('${acc.id}')">View Request</button>
+    ` : req.status === 'pending' ? `
+      <a href="requests.html" class="tl-action primary" onclick="sessionStorage.setItem('open_acc','${acc.id}')">Generate Request →</a>
+    ` : req.status === 'complete' ? `
+      <button class="tl-action" onclick="viewDetails('${acc.id}')">View Details</button>
+    ` : '';
+
+        return `
+    <div class="tl-item">
+      <div class="tl-icon-col">
+        <div class="tl-dot ${dotCls}">${icon}</div>
+        ${i < items.length - 1 ? '<div class="tl-line"></div>' : ''}
+      </div>
+      <div class="tl-content">
+        <div class="tl-top">
+          <div>
+            <div class="tl-company">${acc.company}</div>
+            <div class="tl-domain">${acc.domain}</div>
+          </div>
+          <div class="tl-right">
+            <span class="badge ${riskClass(acc.riskScore)}">${acc.riskScore}</span>
+            <span class="tl-date">${dateStr}</span>
+            ${deadline}
+          </div>
+        </div>
+        <div class="tl-body">${msg}${req.response ? ' <em style="color:var(--green)">"' + req.response + '"</em>' : ''}</div>
+        <div class="tl-actions">${actions}</div>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    function setFilter(f, btn) {
+      tlFilter = f;
+      document.querySelectorAll('.tf-btn').forEach(b => b.classList.toggle('active', b.dataset.f === f));
+      renderTimeline();
+    }
+
+    function markComplete(id) {
+      const acc = AppState.accounts.find(a => a.id === id);
+      if (!AppState.requests[id]) AppState.requests[id] = {};
+      AppState.requests[id].status = 'complete';
+      AppState.requests[id].respondedAt = new Date().toISOString();
+      AppState.requests[id].response = 'Confirmed deleted by ' + acc?.company + '.';
+      AppState.save();
+      showToast((acc?.company || 'Company') + ': deletion confirmed ✓', 'success');
+      renderSummary(); renderDeadlines(); renderTimeline();
+    }
+
+    function sendFollowUp(id) {
+      const acc = AppState.accounts.find(a => a.id === id);
+      showToast('Follow-up template opened for ' + (acc?.company || 'company'), 'info');
+    }
+
+    function openReq(id) { location.href = 'requests.html'; }
+    function viewDetails(id) { location.href = 'dashboard.html'; }
+
+    function exportCSV() {
+      const rows = [['Company', 'Domain', 'Signup', 'Risk', 'Status', 'Sent At', 'Regulation']];
+      AppState.accounts.forEach(a => {
+        const r = AppState.requests[a.id] || {};
+        rows.push([a.company, a.domain, a.signupDate, a.riskScore, r.status || 'pending', r.sentAt || '', r.regulation || '']);
+      });
+      const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'arfm-report.csv';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showToast('Report exported as CSV', 'success');
+    }
+
+    function clearAllData() {
+      if (confirm('Clear all scan data and requests? This cannot be undone.')) {
+        AppState.clear();
+        showToast('All data cleared.', 'info');
+        setTimeout(() => location.href = 'index.html', 1000);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // No demo data — real data only from Google scan
+      if (!AppState.accounts.length) {
+        document.getElementById('tracker-layout').innerHTML = `<div class="tracker-empty"><div style="font-size:48px;margin-bottom:16px;">📊</div><h3>No activity yet</h3><p>Connect your Google account and scan your inbox to start tracking deletion requests.</p><a href="connect.html" class="btn btn-primary">Connect & Scan →</a></div>`;
+        return;
+      }
+      renderSummary();
+      renderDeadlines();
+      renderTimeline();
+
+      // Animate ring after short delay
+      setTimeout(() => {
+        const total = AppState.accounts.length;
+        const complete = Object.values(AppState.requests).filter(r => r.status === 'complete').length;
+        const pct = total > 0 ? Math.round((complete / total) * 100) : 0;
+        const offset = 201 - (201 * pct / 100);
+        document.getElementById('ring-fill').style.strokeDashoffset = offset;
+      }, 300);
+    });
+  </script>
+</body>
+
+</html>
