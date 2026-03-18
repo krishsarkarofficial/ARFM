@@ -507,6 +507,7 @@
     </div>
   </div>
 
+  <script src="api-config.js"></script>
   <script src="app.js"></script>
   <script>
     let currentAcc = null;
@@ -637,11 +638,52 @@
         .then(() => showToast('Email copied to clipboard', 'success'));
     }
 
-    function markSent() {
+    async function markSent() {
       if (!currentAcc) return;
-      AppState.requests[currentAcc.id] = { status: 'sent', sentAt: new Date().toISOString(), regulation: currentReg };
+
+      const btn = document.querySelector('.editor-footer-right .btn-primary');
+      const origText = btn.textContent;
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+
+      try {
+        // Try to send via backend Gmail API
+        const resp = await fetch(API_CONFIG.API_SEND_REQUEST, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            company: currentAcc.company,
+            to_email: `privacy@${currentAcc.domain}`,
+            jurisdiction: currentReg,
+            body: document.getElementById('draft-area').value,
+          }),
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          AppState.requests[currentAcc.id] = {
+            status: 'sent',
+            sentAt: new Date().toISOString(),
+            regulation: currentReg,
+            messageId: data.message_id,
+          };
+          showToast(`Deletion request sent to ${currentAcc.company} via Gmail!`, 'success');
+        } else {
+          // Backend send failed — still mark as manually sent
+          AppState.requests[currentAcc.id] = { status: 'sent', sentAt: new Date().toISOString(), regulation: currentReg };
+          showToast(`Marked as sent. Use "Copy" or "Open in Mail" to send manually.`, 'info');
+        }
+      } catch (e) {
+        // Backend unreachable — mark as sent anyway
+        AppState.requests[currentAcc.id] = { status: 'sent', sentAt: new Date().toISOString(), regulation: currentReg };
+        showToast(`Request for ${currentAcc.company} marked as sent (manual mode)`, 'info');
+      }
+
       AppState.save();
-      showToast(`Request for ${currentAcc.company} marked as sent`, 'success');
+      btn.textContent = origText;
+      btn.disabled = false;
+
       document.getElementById('editor-active').style.display = 'none';
       document.getElementById('sent-overlay').style.display = 'flex';
       document.getElementById('sent-sub').textContent = `Deletion request for ${currentAcc.company} has been sent.`;

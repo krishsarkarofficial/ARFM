@@ -509,6 +509,7 @@
     </div>
   </div>
 
+  <script src="api-config.js"></script>
   <script src="app.js"></script>
   <script>
     let scanRunning = false;
@@ -587,41 +588,70 @@
       document.getElementById('scan-active').style.display = 'block';
       document.getElementById('log-body').innerHTML = '';
 
-      addLog('Starting local scan engine...');
-      addLog('OAuth scope: gmail.readonly (metadata only)');
+      addLog('Starting scan via backend API...');
+      addLog('Sending request to ARFM backend...');
       startFakeLogStream(accountsRef);
 
+      // Simulate progress while the backend scans
+      let progressPct = 0;
+      const progressInterval = setInterval(() => {
+        progressPct = Math.min(progressPct + Math.random() * 8, 90);
+        document.getElementById('stage-text').textContent = `Scanning Gmail headers…`;
+        document.getElementById('pct-text').textContent = Math.round(progressPct) + '%';
+        document.getElementById('progress-fill').style.width = Math.round(progressPct) + '%';
+      }, 500);
+
       try {
-        const accounts = await GmailScanner.scan(
-          AppState.user.accessToken,
-          ({ stage, current }) => {
-            document.getElementById('stage-text').textContent = stage;
-            document.getElementById('pct-text').textContent = current + '%';
-            document.getElementById('progress-fill').style.width = current + '%';
-            accountsRef.length = accounts?.length || 0;
-          }
-        );
+        // Call backend /api/scan (uses the session cookie)
+        const resp = await fetch(API_CONFIG.API_SCAN, { credentials: 'include' });
 
+        clearInterval(progressInterval);
         clearInterval(logInterval);
-        addLog(`✓ Scan complete — ${accounts.length} accounts discovered.`, 'new');
 
-        AppState.accounts = accounts;
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ detail: 'Scan failed' }));
+          throw new Error(err.detail || 'Scan failed with status ' + resp.status);
+        }
+
+        const data = await resp.json();
+        const accounts = data.accounts || [];
+
+        // Map backend response to frontend format
+        const mapped = accounts.map((a, i) => ({
+          id: 'acc_' + i,
+          domain: a.domain,
+          company: a.company || a.domain.split('.')[0],
+          signupDate: a.signup_date || 'Unknown',
+          confidence: a.confidence || 0.8,
+          riskScore: a.risk_score || 'Medium',
+          from: a.from_email || '',
+        }));
+
+        addLog(`✓ Scan complete — ${mapped.length} accounts discovered.`, 'new');
+
+        // Update progress to 100%
+        document.getElementById('stage-text').textContent = 'Scan complete!';
+        document.getElementById('pct-text').textContent = '100%';
+        document.getElementById('progress-fill').style.width = '100%';
+
+        AppState.accounts = mapped;
         AppState.scanComplete = true;
         AppState.save();
 
-        // Final counter update
-        document.getElementById('cnt-accounts').textContent = accounts.length;
-        document.getElementById('cnt-domains').textContent = accounts.length;
+        document.getElementById('cnt-accounts').textContent = mapped.length;
+        document.getElementById('cnt-domains').textContent = mapped.length;
+        document.getElementById('cnt-emails').textContent = data.total_fetched || mapped.length;
+        document.getElementById('cnt-matches').textContent = mapped.length;
 
         await new Promise(r => setTimeout(r, 800));
 
-        // Switch to complete
         document.getElementById('scan-active').style.display = 'none';
         document.getElementById('scan-complete').style.display = 'block';
         showComplete();
-        showToast(`${accounts.length} accounts discovered!`, 'success');
+        showToast(`${mapped.length} accounts discovered!`, 'success');
 
       } catch (e) {
+        clearInterval(progressInterval);
         clearInterval(logInterval);
         addLog('Error: ' + e.message, 'warn');
         showToast('Scan failed: ' + e.message, 'error');

@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════════════
+#  ARFM Backend — Render Blueprint
+#  https://render.com/docs/blueprint-spec
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  - type: web
+    name: arfm-backend
+    env: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: OAUTH_REDIRECT_URI
+        sync: false
+    healthCheckPath: /health

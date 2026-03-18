@@ -48,6 +48,20 @@ def decrypt_tokens(cookie_value: str) -> dict:
         )
 
 
+def set_session_cookie(response, encrypted_value: str):
+    """Set the session cookie with environment-appropriate security flags."""
+    settings = get_settings()
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=encrypted_value,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="none" if settings.is_production else "lax",
+        max_age=MAX_AGE_SECONDS,
+        path="/",
+    )
+
+
 def get_credentials(request: Request) -> Credentials:
     """
     FastAPI dependency — extracts Google OAuth credentials from the

@@ -1,22 +1,13 @@
 /* ═══════════════════════════════════════════════════════════
    ARFM — SHARED JS
-   app.js: router, state, OAuth, Gmail scanner, utilities
+   app.js: router, state, OAuth (via backend), utilities
    ═══════════════════════════════════════════════════════════ */
 
 'use strict';
 
-// ─── CONFIG ──────────────────────────────────────────────────
-// Replace with your real Google OAuth client ID
-const GOOGLE_CLIENT_ID = window.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
-const GOOGLE_SCOPES = [
-  'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/userinfo.profile'
-].join(' ');
-
 // ─── APP STATE ────────────────────────────────────────────────
 const AppState = {
-  user: null,          // { email, name, picture, accessToken }
+  user: null,          // { email, name, picture }
   accounts: [],        // discovered accounts
   scanProgress: null,  // { current, total, stage }
   requests: {},        // { [accountId]: { status, sentAt, response } }
@@ -224,271 +215,51 @@ function setNavActive() {
   }
 }
 
-// ─── GOOGLE OAUTH ─────────────────────────────────────────────
+// ─── GOOGLE OAUTH (via Backend) ───────────────────────────────
 const OAuth = {
-  tokenClient: null,
-
-  init() {
-    // Google Identity Services (GIS)
-    if (!window.google?.accounts?.oauth2) return;
-    this.tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: GOOGLE_SCOPES,
-      callback: (resp) => this._handleToken(resp),
-      error_callback: (err) => {
-        console.error('OAuth error', err);
-        showToast('Authentication failed. Please try again.', 'error');
-        this._onError && this._onError(err);
-      }
-    });
-  },
-
-  login(onSuccess, onError) {
-    this._onSuccess = onSuccess;
-    this._onError = onError;
-    if (!this.tokenClient) {
-      showToast('Please configure your Google Client ID to connect.', 'info', 5000);
-      onError && onError(new Error('No Google Client ID configured'));
-      return;
-    }
-    this.tokenClient.requestAccessToken({ prompt: 'consent' });
-  },
-
-  async _handleToken(resp) {
-    if (resp.error) {
-      showToast('Auth error: ' + resp.error, 'error');
-      this._onError && this._onError(resp);
-      return;
-    }
-    // Fetch user profile
+  async login() {
+    // Redirect to backend /auth/login which returns the Google OAuth URL
     try {
-      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: 'Bearer ' + resp.access_token }
-      });
-      const profile = await res.json();
-      AppState.user = {
-        email: profile.email,
-        name: profile.name || profile.email,
-        picture: profile.picture,
-        accessToken: resp.access_token
-      };
-      AppState.save();
-      this._onSuccess && this._onSuccess(AppState.user);
+      const resp = await fetch(API_CONFIG.AUTH_LOGIN, { credentials: 'include' });
+      const data = await resp.json();
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      } else {
+        showToast('Failed to get auth URL', 'error');
+      }
     } catch (e) {
-      showToast('Failed to fetch profile', 'error');
-      this._onError && this._onError(e);
+      showToast('Could not connect to backend. Is it running?', 'error');
+      console.error('Auth error:', e);
     }
+  },
+
+  async checkStatus() {
+    // Check if we have a valid session cookie
+    try {
+      const resp = await fetch(API_CONFIG.AUTH_STATUS, { credentials: 'include' });
+      const data = await resp.json();
+      if (data.authenticated && data.user) {
+        AppState.user = {
+          email: data.user.email || '',
+          name: data.user.name || data.user.email || '',
+          picture: data.user.picture || '',
+        };
+        AppState.save();
+        return true;
+      }
+    } catch (e) {
+      console.warn('Auth status check failed:', e);
+    }
+    return false;
   },
 
   logout() {
-    if (window.google?.accounts?.oauth2 && AppState.user?.accessToken) {
-      google.accounts.oauth2.revoke(AppState.user.accessToken, () => { });
-    }
     AppState.clear();
     setNavActive();
     showToast('Signed out. All local data cleared.', 'info');
-    setTimeout(() => location.href = 'index.html', 800);
+    // Redirect to backend logout to clear the cookie
+    window.location.href = API_CONFIG.AUTH_LOGOUT;
   }
-};
-
-// ─── GMAIL SCANNER ────────────────────────────────────────────
-const GmailScanner = {
-
-  // Keyword patterns for signup detection
-  SUBJECT_PATTERNS: [
-    /welcome to (.+)/i,
-    /verify your (email|account|address)/i,
-    /confirm your (.+) (account|email|registration)/i,
-    /activate your (.+) account/i,
-    /your (.+) account (is ready|has been created|was created)/i,
-    /get started with (.+)/i,
-    /thanks for (signing up|joining|registering)/i,
-    /you(\'re| are) (in|registered|signed up)/i,
-    /complete your (.+) (registration|signup|sign-up)/i,
-    /finish (setting up|creating) your (.+) account/i,
-    /please verify your/i,
-    /almost there[,!]/i,
-    /one more step/i,
-    /confirm your subscription/i,
-    /account (created|confirmed|activated)/i,
-  ],
-
-  SUBJECT_KEYWORDS: [
-    'welcome', 'verify', 'confirm', 'activate', 'registration',
-    'get started', 'thanks for signing', 'you\'re in', 'account created',
-    'email confirmation', 'please confirm', 'subscription confirmed'
-  ],
-
-  SENDER_PATTERNS: [
-    /noreply@/, /no-reply@/, /donotreply@/, /accounts@/,
-    /notifications@/, /hello@/, /hi@/, /welcome@/, /team@/,
-    /support@/, /info@/, /mail@/, /mailer@/, /confirm@/,
-    /verify@/, /registration@/,
-  ],
-
-  // Domains to ignore (common non-signup senders)
-  IGNORE_DOMAINS: new Set([
-    'google.com', 'gmail.com', 'apple.com', 'microsoft.com',
-    'amazon.com', 'amazon.co.uk', 'paypal.com', 'bankofamerica.com',
-    'chase.com', 'wellsfargo.com'
-  ]),
-
-  // Company name map for known domains
-  DOMAIN_MAP: {
-    'spotify.com': 'Spotify', 'notion.so': 'Notion', 'canva.com': 'Canva',
-    'trello.com': 'Trello', 'mailchimp.com': 'Mailchimp', 'zapier.com': 'Zapier',
-    'miro.com': 'Miro', 'slack.com': 'Slack', 'github.com': 'GitHub',
-    'gitlab.com': 'GitLab', 'figma.com': 'Figma', 'dropbox.com': 'Dropbox',
-    'notion.io': 'Notion', 'typeform.com': 'Typeform', 'airtable.com': 'Airtable',
-    'asana.com': 'Asana', 'linear.app': 'Linear', 'notion.site': 'Notion',
-    'hubspot.com': 'HubSpot', 'salesforce.com': 'Salesforce', 'adobe.com': 'Adobe',
-    'squarespace.com': 'Squarespace', 'wix.com': 'Wix', 'webflow.com': 'Webflow',
-    'shopify.com': 'Shopify', 'etsy.com': 'Etsy', 'ebay.com': 'eBay',
-    'twitter.com': 'Twitter/X', 'x.com': 'X (Twitter)', 'instagram.com': 'Instagram',
-    'facebook.com': 'Facebook', 'linkedin.com': 'LinkedIn', 'pinterest.com': 'Pinterest',
-    'reddit.com': 'Reddit', 'discord.com': 'Discord', 'twitch.tv': 'Twitch',
-    'medium.com': 'Medium', 'substack.com': 'Substack', 'producthunt.com': 'Product Hunt',
-    'devto': 'Dev.to', 'stackoverflow.com': 'Stack Overflow',
-    'zoom.us': 'Zoom', 'calendly.com': 'Calendly', 'loom.com': 'Loom',
-    'notion.com': 'Notion', 'clickup.com': 'ClickUp', 'monday.com': 'Monday.com',
-    'jira.com': 'Jira', 'confluence.com': 'Confluence',
-    'heroku.com': 'Heroku', 'netlify.com': 'Netlify', 'vercel.com': 'Vercel',
-    'digitalocean.com': 'DigitalOcean', 'aws.amazon.com': 'AWS',
-  },
-
-  RISK_MAP: {
-    high: ['mailchimp.com', 'hubspot.com', 'salesforce.com', 'facebook.com', 'instagram.com',
-      'linkedin.com', 'twitter.com', 'x.com', 'zapier.com', 'shopify.com', 'ebay.com',
-      'etsy.com', 'dropbox.com', 'slack.com'],
-    low: ['notion.so', 'figma.com', 'linear.app', 'vercel.com', 'netlify.com', 'github.com'],
-  },
-
-  async scan(accessToken, onProgress) {
-    return await this._realScan(accessToken, onProgress);
-  },
-
-  async _realScan(token, onProgress) {
-    const found = new Map(); // domain -> account
-
-    onProgress({ stage: 'Connecting to Gmail…', current: 0, total: 100 });
-
-    // Fetch up to 500 messages matching signup patterns
-    const queries = [
-      'subject:welcome',
-      'subject:verify',
-      'subject:confirm account',
-      'subject:"get started"',
-      'subject:"account created"',
-      'subject:"thanks for signing"',
-    ];
-
-    let messageIds = [];
-    for (const q of queries) {
-      try {
-        const r = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=100`,
-          { headers: { Authorization: 'Bearer ' + token } }
-        );
-        if (!r.ok) throw new Error('Gmail API ' + r.status);
-        const data = await r.json();
-        if (data.messages) messageIds.push(...data.messages.map(m => m.id));
-      } catch (e) { console.warn('Query failed:', q, e); }
-    }
-
-    // Deduplicate
-    messageIds = [...new Set(messageIds)];
-    const total = messageIds.length;
-    onProgress({ stage: `Found ${total} candidate emails. Scanning…`, current: 5, total: 100 });
-
-    // Fetch metadata for each (batch in groups of 20)
-    for (let i = 0; i < messageIds.length; i++) {
-      const id = messageIds[i];
-      const pct = 5 + Math.round((i / Math.max(total, 1)) * 80);
-      if (i % 5 === 0) onProgress({ stage: `Analyzing email ${i + 1} of ${total}…`, current: pct, total: 100 });
-
-      try {
-        const r = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
-          { headers: { Authorization: 'Bearer ' + token } }
-        );
-        if (!r.ok) continue;
-        const msg = await r.json();
-        const headers = {};
-        (msg.payload?.headers || []).forEach(h => { headers[h.name.toLowerCase()] = h.value; });
-
-        const from = headers['from'] || '';
-        const subject = headers['subject'] || '';
-        const date = headers['date'] || '';
-        const snippet = msg.snippet || '';
-
-        const result = this._analyzeEmail(from, subject, snippet, date);
-        if (result && !found.has(result.domain)) {
-          found.set(result.domain, result);
-        }
-      } catch (e) { /* skip */ }
-
-      // Rate limit: tiny delay every 20
-      if (i % 20 === 19) await new Promise(r => setTimeout(r, 100));
-    }
-
-    onProgress({ stage: 'Building digital footprint…', current: 92, total: 100 });
-    await new Promise(r => setTimeout(r, 400));
-
-    const accounts = [...found.values()].map((a, i) => ({ ...a, id: 'acc_' + i }));
-    onProgress({ stage: `Scan complete. ${accounts.length} accounts discovered.`, current: 100, total: 100 });
-    return accounts;
-  },
-
-  _analyzeEmail(from, subject, snippet, date) {
-    // Extract domain from sender
-    const emailMatch = from.match(/@([\w.-]+\.\w{2,})/);
-    if (!emailMatch) return null;
-    let domain = emailMatch[1].toLowerCase();
-    // Strip subdomains like mail.spotify.com → spotify.com
-    const parts = domain.split('.');
-    if (parts.length > 2) domain = parts.slice(-2).join('.');
-
-    if (this.IGNORE_DOMAINS.has(domain)) return null;
-
-    // Score
-    let score = 0;
-    const subjectLower = subject.toLowerCase();
-    const snippetLower = snippet.toLowerCase();
-
-    // Subject pattern match
-    if (this.SUBJECT_PATTERNS.some(p => p.test(subject))) score += 0.45;
-    else if (this.SUBJECT_KEYWORDS.some(k => subjectLower.includes(k))) score += 0.25;
-
-    // Transactional sender
-    if (this.SENDER_PATTERNS.some(p => p.test(from.toLowerCase()))) score += 0.25;
-
-    // Body snippet keywords
-    if (['welcome', 'verify', 'confirm', 'activate', 'signed up', 'registration'].some(k => snippetLower.includes(k))) score += 0.2;
-
-    // Known domain bonus
-    if (this.DOMAIN_MAP[domain]) score += 0.1;
-
-    if (score < 0.3) return null;
-
-    const company = this._guessCompany(domain);
-    const riskScore = this._calcRisk(domain);
-    const signupDate = date ? new Date(date).toISOString().slice(0, 7) : 'Unknown';
-
-    return { domain, company, signupDate, confidence: Math.min(score, 0.99), riskScore, from };
-  },
-
-  _guessCompany(domain) {
-    if (this.DOMAIN_MAP[domain]) return this.DOMAIN_MAP[domain];
-    // Capitalize domain name
-    const name = domain.split('.')[0];
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  },
-
-  _calcRisk(domain) {
-    if (this.RISK_MAP.high.includes(domain)) return 'High';
-    if (this.RISK_MAP.low.includes(domain)) return 'Low';
-    return 'Medium';
-  },
 };
 
 // ─── LEGAL TEMPLATES ──────────────────────────────────────────
@@ -606,7 +377,7 @@ function fmtDate(dateStr) {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initCursor();
   initReveal();
   setNavActive();
@@ -615,8 +386,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initTextReveal();
   initSmoothScroll();
 
-  // Init GIS when Google loads
-  window.handleGoogleInit = function () { OAuth.init(); };
+  // Check auth status on load (if we have API_CONFIG)
+  if (typeof API_CONFIG !== 'undefined' && !AppState.user) {
+    await OAuth.checkStatus();
+    setNavActive();
+  }
 
   // Nav sign out
   const signoutBtn = document.getElementById('nav-signout');

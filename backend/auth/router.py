@@ -4,11 +4,11 @@ Google OAuth 2.0 login flow with encrypted cookie sessions.
 """
 
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from google_auth_oauthlib.flow import Flow
 
 from config import get_settings
-from auth.security import encrypt_tokens, COOKIE_NAME
+from auth.security import encrypt_tokens, set_session_cookie, decrypt_tokens, COOKIE_NAME
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -81,15 +81,7 @@ async def callback(request: Request, code: str):
         url=f"{settings.FRONTEND_URL}/dashboard.html",
         status_code=302,
     )
-    response.set_cookie(
-        key=COOKIE_NAME,
-        value=encrypted,
-        httponly=True,
-        secure=False,  # Set to True in production (HTTPS)
-        samesite="lax",
-        max_age=86400,  # 24 hours
-        path="/",
-    )
+    set_session_cookie(response, encrypted)
 
     return response
 
@@ -114,8 +106,29 @@ async def auth_status(request: Request):
         return {"authenticated": False}
 
     try:
-        from auth.security import decrypt_tokens
-        decrypt_tokens(cookie_value)
-        return {"authenticated": True}
+        token_data = decrypt_tokens(cookie_value)
+        # Try to get user info from the token
+        user_info = {}
+        try:
+            from google.oauth2.credentials import Credentials
+            from googleapiclient.discovery import build
+            creds = Credentials(
+                token=token_data["token"],
+                refresh_token=token_data.get("refresh_token"),
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=token_data.get("client_id", ""),
+                client_secret=token_data.get("client_secret", ""),
+            )
+            service = build("oauth2", "v2", credentials=creds)
+            info = service.userinfo().get().execute()
+            user_info = {
+                "email": info.get("email", ""),
+                "name": info.get("name", ""),
+                "picture": info.get("picture", ""),
+            }
+        except Exception:
+            pass
+
+        return {"authenticated": True, "user": user_info}
     except Exception:
         return {"authenticated": False}

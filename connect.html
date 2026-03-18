@@ -451,16 +451,22 @@
     </div>
   </div>
 
+  <script src="api-config.js"></script>
   <script src="app.js"></script>
   <script>
-    // Show config hint if no real client ID
-    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
+    // Check if backend is reachable
+    fetch(API_CONFIG.HEALTH).catch(() => {
       document.getElementById('config-hint').style.display = 'block';
-    }
+    });
 
-    // Check if already logged in
+    // Check if already logged in (from session cookie)
     if (AppState.user) {
       showLoggedIn(AppState.user);
+    } else {
+      // Try checking backend auth status
+      OAuth.checkStatus().then(ok => {
+        if (ok) showLoggedIn(AppState.user);
+      });
     }
 
     function showLoggedIn(user) {
@@ -477,28 +483,16 @@
     function startGoogleOAuth() {
       const btn = document.getElementById('google-btn');
       btn.classList.add('loading');
-      btn.textContent = 'Connecting…';
-
-      OAuth.login(
-        (user) => {
-          showToast('Connected as ' + user.email, 'success');
-          showLoggedIn(user);
-          setNavActive();
-          setTimeout(() => location.href = 'scan.html', 1200);
-        },
-        (err) => {
-          btn.classList.remove('loading');
-          btn.innerHTML = `<svg class="g-logo" viewBox="0 0 24 24">...</svg>Continue with Google`;
-          location.reload();
-        }
-      );
+      btn.textContent = 'Redirecting to Google…';
+      // Server-side OAuth: redirect to backend which sends us to Google
+      OAuth.login();
     }
 
     function handleSignOut() {
       OAuth.logout();
     }
   </script>
-  <script async defer src="https://accounts.google.com/gsi/client" onload="OAuth.init()"></script>
+  <script src="api-config.js"></script>
 </body>
 
 </html>
