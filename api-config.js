@@ -10,7 +10,7 @@ const API_CONFIG = (() => {
   const hostname = window.location.hostname;
 
   // Production: your Render backend URL (update after first deploy)
-  const PRODUCTION_API = 'https://arfm-backend.onrender.com';
+  const PRODUCTION_API = 'https://arfm.onrender.com';
 
   // Development: local FastAPI server
   const DEV_API = 'http://localhost:8000';
