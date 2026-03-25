@@ -3,6 +3,9 @@ ARFM Backend — Auth Router
 Google OAuth 2.0 login flow with encrypted cookie sessions.
 """
 
+import os
+import logging
+
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 from google_auth_oauthlib.flow import Flow
@@ -10,6 +13,10 @@ from google_auth_oauthlib.flow import Flow
 from config import get_settings
 from auth.security import encrypt_tokens, set_session_cookie, decrypt_tokens, COOKIE_NAME
 
+# Allow Google to return fewer scopes than requested (common in production)
+os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
@@ -51,39 +58,75 @@ async def login():
 
 
 @router.get("/callback")
-async def callback(request: Request, code: str):
+async def callback(request: Request, code: str = None, error: str = None):
     """
     Handle the OAuth2 callback from Google.
     Exchanges the authorization code for tokens, encrypts them into
     an HTTP-only cookie, and redirects to the frontend dashboard.
     """
     settings = get_settings()
-    flow = _build_flow(settings)
 
-    # Exchange the authorization code for credentials
-    flow.fetch_token(code=code)
-    credentials = flow.credentials
+    # Handle OAuth errors (user denied access, etc.)
+    if error:
+        logger.warning(f"OAuth error from Google: {error}")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/connect.html?error={error}",
+            status_code=302,
+        )
 
-    # Serialize token data for cookie storage
-    token_data = {
-        "token": credentials.token,
-        "refresh_token": credentials.refresh_token,
-        "token_uri": credentials.token_uri,
-        "client_id": credentials.client_id,
-        "client_secret": credentials.client_secret,
-        "scopes": list(credentials.scopes) if credentials.scopes else [],
-    }
+    if not code:
+        logger.warning("No authorization code received in callback")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/connect.html?error=no_code",
+            status_code=302,
+        )
 
-    encrypted = encrypt_tokens(token_data)
+    try:
+        flow = _build_flow(settings)
 
-    # Redirect to frontend with the session cookie set
-    response = RedirectResponse(
-        url=f"{settings.FRONTEND_URL}/dashboard.html",
-        status_code=302,
-    )
-    set_session_cookie(response, encrypted)
+        # Exchange the authorization code for credentials
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
 
-    return response
+        # Serialize token data for cookie storage
+        token_data = {
+            "token": credentials.token,
+            "refresh_token": credentials.refresh_token,
+            "token_uri": credentials.token_uri,
+            "client_id": credentials.client_id,
+            "client_secret": credentials.client_secret,
+            "scopes": list(credentials.scopes) if credentials.scopes else [],
+        }
+
+        encrypted = encrypt_tokens(token_data)
+
+        # Redirect to frontend with the session cookie set
+        response = RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/dashboard.html",
+            status_code=302,
+        )
+        set_session_cookie(response, encrypted)
+
+        logger.info("OAuth callback successful, redirecting to dashboard")
+        return response
+
+    except Exception as e:
+        logger.error(f"OAuth callback failed: {type(e).__name__}: {e}")
+        # Return a JSON error in development, redirect in production
+        if settings.is_production:
+            return RedirectResponse(
+                url=f"{settings.FRONTEND_URL}/connect.html?error=callback_failed",
+                status_code=302,
+            )
+        else:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "detail": "OAuth callback failed",
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+            )
 
 
 @router.get("/logout")
