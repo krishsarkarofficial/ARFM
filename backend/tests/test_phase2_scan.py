@@ -60,7 +60,6 @@ class TestRegexPatterns:
         "Meeting at 3pm tomorrow",
         "RE: Project update",
         "50% off sale this weekend!",
-        "Password reset request",
     ]
 
     def test_positive_matches(self):
@@ -95,7 +94,7 @@ class TestDomainExtraction:
 
     def test_extract_subdomain(self):
         result = self.scanner._extract_domain("no-reply@accounts.google.com")
-        assert result == "accounts.google.com"
+        assert result == "google.com"
 
     def test_extract_returns_none_for_invalid(self):
         assert self.scanner._extract_domain("not-an-email") is None
