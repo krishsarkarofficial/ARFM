@@ -468,9 +468,20 @@
               <div class="reg-tabs-bar">
                 <button class="rtb active" id="rtb-gdpr" onclick="setReg('gdpr')">🇪🇺 GDPR Art. 17</button>
                 <button class="rtb" id="rtb-ccpa" onclick="setReg('ccpa')">🇺🇸 CCPA § 1798.105</button>
+                <button class="rtb" id="rtb-dpdpa" onclick="setReg('dpdpa')">🇮🇳 DPDPA § 12(3)</button>
               </div>
               <div class="editor-toolbar-right">
                 <button class="btn btn-ghost btn-xs" onclick="resetDraft()">↺ Reset</button>
+              </div>
+            </div>
+
+            <!-- DPO Info Bar -->
+            <div id="dpo-bar" style="padding:10px 22px;border-bottom:1px solid var(--border);display:none;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:11px;color:var(--text-dim);">To (DPO):</span>
+                <input type="email" id="dpo-email-input" style="flex:1;padding:5px 10px;font-size:12px;min-width:200px;" placeholder="privacy@example.com">
+                <span id="dpo-confidence" class="badge badge-dim" style="font-size:10px;"></span>
+                <span id="dpo-source" style="font-size:10px;color:var(--text-dim);"></span>
               </div>
             </div>
 
@@ -596,21 +607,57 @@
       document.getElementById('ed-risk').innerHTML = `<span class="badge ${riskClass(a.riskScore)}">${a.riskScore}</span>`;
       document.getElementById('ed-conf').textContent = Math.round(a.confidence * 100) + '%';
       generateDraft();
+      // Auto-resolve DPO
+      resolveDPO(a.domain);
+    }
+
+    async function resolveDPO(domain) {
+      const bar = document.getElementById('dpo-bar');
+      const input = document.getElementById('dpo-email-input');
+      const confEl = document.getElementById('dpo-confidence');
+      const srcEl = document.getElementById('dpo-source');
+
+      bar.style.display = 'block';
+      input.value = `privacy@${domain}`;
+      confEl.textContent = '';
+      srcEl.textContent = 'Resolving...';
+
+      try {
+        const resp = await fetch(`${API_CONFIG.BASE_URL}/api/dpo-lookup?domain=${encodeURIComponent(domain)}`, { credentials: 'include' });
+        if (resp.ok) {
+          const data = await resp.json();
+          input.value = data.dpo_email;
+          const pct = Math.round(data.confidence * 100);
+          confEl.textContent = `${pct}% confidence`;
+          confEl.className = `badge ${pct >= 90 ? 'badge-green' : pct >= 60 ? 'badge-amber' : 'badge-red'}`;
+          srcEl.textContent = data.source === 'known_map' ? '✓ Verified DPO' : '⚡ Auto-generated';
+          srcEl.style.color = data.source === 'known_map' ? 'var(--green)' : 'var(--amber)';
+        }
+      } catch (e) {
+        srcEl.textContent = '⚠ Fallback (offline)';
+        srcEl.style.color = 'var(--amber)';
+      }
     }
 
     function setReg(reg) {
       currentReg = reg;
       document.getElementById('rtb-gdpr').classList.toggle('active', reg === 'gdpr');
       document.getElementById('rtb-ccpa').classList.toggle('active', reg === 'ccpa');
+      document.getElementById('rtb-dpdpa').classList.toggle('active', reg === 'dpdpa');
       generateDraft();
     }
 
     function generateDraft() {
       if (!currentAcc) return;
       const userEmail = AppState.user?.email || 'your@email.com';
-      const draft = currentReg === 'gdpr'
-        ? Templates.gdpr(currentAcc.company, userEmail)
-        : Templates.ccpa(currentAcc.company, userEmail);
+      let draft;
+      if (currentReg === 'gdpr') {
+        draft = Templates.gdpr(currentAcc.company, userEmail);
+      } else if (currentReg === 'ccpa') {
+        draft = Templates.ccpa(currentAcc.company, userEmail);
+      } else {
+        draft = Templates.dpdpa(currentAcc.company, userEmail);
+      }
       document.getElementById('draft-area').value = draft;
       updateCharCount();
       updateMailto();
@@ -646,15 +693,18 @@
       btn.textContent = 'Sending…';
       btn.disabled = true;
 
+      const dpoEmail = document.getElementById('dpo-email-input')?.value || `privacy@${currentAcc.domain}`;
+
       try {
-        // Try to send via backend Gmail API
+        // Send via backend Gmail API with DPO auto-resolution
         const resp = await fetch(API_CONFIG.API_SEND_REQUEST, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
             company: currentAcc.company,
-            to_email: `privacy@${currentAcc.domain}`,
+            to_email: dpoEmail,
+            domain: currentAcc.domain,
             jurisdiction: currentReg,
             body: document.getElementById('draft-area').value,
           }),
@@ -667,15 +717,15 @@
             sentAt: new Date().toISOString(),
             regulation: currentReg,
             messageId: data.message_id,
+            to: data.to,
+            dpoSource: data.dpo_source,
           };
-          showToast(`Deletion request sent to ${currentAcc.company} via Gmail!`, 'success');
+          showToast(`Deletion request sent to ${currentAcc.company} (${dpoEmail}) via Gmail!`, 'success');
         } else {
-          // Backend send failed — still mark as manually sent
           AppState.requests[currentAcc.id] = { status: 'sent', sentAt: new Date().toISOString(), regulation: currentReg };
           showToast(`Marked as sent. Use "Copy" or "Open in Mail" to send manually.`, 'info');
         }
       } catch (e) {
-        // Backend unreachable — mark as sent anyway
         AppState.requests[currentAcc.id] = { status: 'sent', sentAt: new Date().toISOString(), regulation: currentReg };
         showToast(`Request for ${currentAcc.company} marked as sent (manual mode)`, 'info');
       }
@@ -686,7 +736,7 @@
 
       document.getElementById('editor-active').style.display = 'none';
       document.getElementById('sent-overlay').style.display = 'flex';
-      document.getElementById('sent-sub').textContent = `Deletion request for ${currentAcc.company} has been sent.`;
+      document.getElementById('sent-sub').textContent = `Deletion request for ${currentAcc.company} has been sent to ${dpoEmail}.`;
       renderStats();
       renderList();
     }

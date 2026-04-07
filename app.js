@@ -346,6 +346,49 @@ ${userEmail}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Submitted pursuant to California Civil Code §§ 1798.100–1798.199 (CCPA/CPRA).
 Non-compliance may be reported to the California Privacy Protection Agency.`;
+  },
+
+  dpdpa(company, userEmail) {
+    const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    return `Subject: DPDPA Section 12(3) — Right to Erasure of Personal Data
+
+To the Data Protection Officer / Grievance Officer,
+${company}
+
+I am writing to exercise my right to erasure of personal data under Section 12(3) of the Digital Personal Data Protection Act, 2023 (DPDPA) of India.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA PRINCIPAL DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Email Address:   ${userEmail}
+Date of Request: ${date}
+Reference:       DPDPA 2023, Section 12(3) Erasure Request
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REQUEST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+I hereby withdraw my consent for the processing of my personal data and request that ${company}:
+
+1. Permanently erase all personal data associated with the above email address from all your systems, databases, and records;
+
+2. Direct any data processors or third parties with whom you have shared my personal data to erase it as well;
+
+3. Cease all processing of my personal data immediately upon receipt of this request;
+
+4. Provide written confirmation that the erasure has been completed.
+
+Under the DPDPA 2023, Data Fiduciaries are required to comply with erasure requests within a reasonable timeframe. Failure to comply may result in a complaint to the Data Protection Board of India under Section 27 of the Act.
+
+If you require additional information to verify my identity, please advise.
+
+Yours faithfully,
+
+A Data Principal
+${userEmail}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This request is made pursuant to the Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023), Government of India.
+Non-compliance may be reported to the Data Protection Board of India.`;
   }
 };
 

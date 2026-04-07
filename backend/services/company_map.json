@@ -71,6 +71,12 @@
         "risk": 0.85,
         "deletion_email": "privacy@amazon.com"
     },
+    "amazon.in": {
+        "name": "Amazon India",
+        "category": "shopping",
+        "risk": 0.85,
+        "deletion_email": "grievance-officer@amazon.in"
+    },
     "ebay.com": {
         "name": "eBay",
         "category": "shopping",
@@ -101,6 +107,36 @@
         "risk": 0.8,
         "deletion_email": "DataProtection@service.alibaba.com"
     },
+    "flipkart.com": {
+        "name": "Flipkart",
+        "category": "shopping",
+        "risk": 0.75,
+        "deletion_email": "grievance.officer@flipkart.com"
+    },
+    "myntra.com": {
+        "name": "Myntra",
+        "category": "shopping",
+        "risk": 0.6,
+        "deletion_email": "privacy@myntra.com"
+    },
+    "meesho.com": {
+        "name": "Meesho",
+        "category": "shopping",
+        "risk": 0.55,
+        "deletion_email": "grievance@meesho.com"
+    },
+    "ajio.com": {
+        "name": "AJIO",
+        "category": "shopping",
+        "risk": 0.5,
+        "deletion_email": "care@ajio.com"
+    },
+    "nykaa.com": {
+        "name": "Nykaa",
+        "category": "shopping",
+        "risk": 0.5,
+        "deletion_email": "privacy@nykaa.com"
+    },
     "paypal.com": {
         "name": "PayPal",
         "category": "finance",
@@ -130,6 +166,42 @@
         "category": "finance",
         "risk": 0.85,
         "deletion_email": "dpo@coinbase.com"
+    },
+    "paytm.com": {
+        "name": "Paytm",
+        "category": "finance",
+        "risk": 0.8,
+        "deletion_email": "grievanceofficer@paytm.com"
+    },
+    "phonepe.com": {
+        "name": "PhonePe",
+        "category": "finance",
+        "risk": 0.75,
+        "deletion_email": "grievance@phonepe.com"
+    },
+    "razorpay.com": {
+        "name": "Razorpay",
+        "category": "finance",
+        "risk": 0.7,
+        "deletion_email": "privacy@razorpay.com"
+    },
+    "groww.in": {
+        "name": "Groww",
+        "category": "finance",
+        "risk": 0.7,
+        "deletion_email": "grievance@groww.in"
+    },
+    "zerodha.com": {
+        "name": "Zerodha",
+        "category": "finance",
+        "risk": 0.7,
+        "deletion_email": "complaints@zerodha.com"
+    },
+    "cred.club": {
+        "name": "CRED",
+        "category": "finance",
+        "risk": 0.65,
+        "deletion_email": "grievance@cred.club"
     },
     "github.com": {
         "name": "GitHub",
@@ -209,6 +281,24 @@
         "risk": 0.35,
         "deletion_email": "privacy@substack.com"
     },
+    "hotstar.com": {
+        "name": "Disney+ Hotstar",
+        "category": "media",
+        "risk": 0.55,
+        "deletion_email": "grievanceofficer@hotstar.com"
+    },
+    "jiosaavn.com": {
+        "name": "JioSaavn",
+        "category": "media",
+        "risk": 0.5,
+        "deletion_email": "grievance.officer@saavn.com"
+    },
+    "gaana.com": {
+        "name": "Gaana",
+        "category": "media",
+        "risk": 0.45,
+        "deletion_email": "privacy@gaana.com"
+    },
     "dropbox.com": {
         "name": "Dropbox",
         "category": "cloud",
@@ -251,6 +341,24 @@
         "risk": 0.3,
         "deletion_email": "privacy@duolingo.com"
     },
+    "unacademy.com": {
+        "name": "Unacademy",
+        "category": "education",
+        "risk": 0.4,
+        "deletion_email": "grievance@unacademy.com"
+    },
+    "byjus.com": {
+        "name": "BYJU'S",
+        "category": "education",
+        "risk": 0.5,
+        "deletion_email": "privacy@byjus.com"
+    },
+    "upgrad.com": {
+        "name": "upGrad",
+        "category": "education",
+        "risk": 0.4,
+        "deletion_email": "grievance@upgrad.com"
+    },
     "uber.com": {
         "name": "Uber",
         "category": "travel",
@@ -275,6 +383,24 @@
         "risk": 0.65,
         "deletion_email": "dataprotectionoffice@booking.com"
     },
+    "ola.com": {
+        "name": "Ola",
+        "category": "travel",
+        "risk": 0.65,
+        "deletion_email": "grievance@olacabs.com"
+    },
+    "makemytrip.com": {
+        "name": "MakeMyTrip",
+        "category": "travel",
+        "risk": 0.55,
+        "deletion_email": "grievanceofficer@makemytrip.com"
+    },
+    "redbus.in": {
+        "name": "redBus",
+        "category": "travel",
+        "risk": 0.4,
+        "deletion_email": "privacy@redbus.in"
+    },
     "doordash.com": {
         "name": "DoorDash",
         "category": "food",
@@ -293,6 +419,24 @@
         "risk": 0.65,
         "deletion_email": "privacy@uber.com"
     },
+    "zomato.com": {
+        "name": "Zomato",
+        "category": "food",
+        "risk": 0.65,
+        "deletion_email": "grievanceofficer@zomato.com"
+    },
+    "swiggy.com": {
+        "name": "Swiggy",
+        "category": "food",
+        "risk": 0.6,
+        "deletion_email": "grievances@swiggy.in"
+    },
+    "blinkit.com": {
+        "name": "Blinkit",
+        "category": "food",
+        "risk": 0.5,
+        "deletion_email": "grievance@blinkit.com"
+    },
     "zoom.us": {
         "name": "Zoom",
         "category": "tech",
@@ -310,5 +454,47 @@
         "category": "tech",
         "risk": 0.6,
         "deletion_email": "privacy@adobe.com"
+    },
+    "jio.com": {
+        "name": "Jio",
+        "category": "telecom",
+        "risk": 0.7,
+        "deletion_email": "grievance.officer@ril.com"
+    },
+    "airtel.in": {
+        "name": "Airtel",
+        "category": "telecom",
+        "risk": 0.65,
+        "deletion_email": "grievanceofficer@airtel.com"
+    },
+    "practo.com": {
+        "name": "Practo",
+        "category": "health",
+        "risk": 0.7,
+        "deletion_email": "privacy@practo.com"
+    },
+    "1mg.com": {
+        "name": "Tata 1mg",
+        "category": "health",
+        "risk": 0.65,
+        "deletion_email": "grievance@1mg.com"
+    },
+    "dunzo.com": {
+        "name": "Dunzo",
+        "category": "delivery",
+        "risk": 0.45,
+        "deletion_email": "grievance@dunzo.com"
+    },
+    "bigbasket.com": {
+        "name": "BigBasket",
+        "category": "shopping",
+        "risk": 0.5,
+        "deletion_email": "privacy@bigbasket.com"
+    },
+    "urbancompany.com": {
+        "name": "Urban Company",
+        "category": "services",
+        "risk": 0.5,
+        "deletion_email": "grievance@urbancompany.com"
     }
 }

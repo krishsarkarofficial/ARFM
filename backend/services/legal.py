@@ -1,6 +1,6 @@
 """
 ARFM Backend — Legal Template Engine
-GDPR and CCPA data deletion request templates.
+GDPR, CCPA, and DPDPA data deletion request templates.
 """
 
 from datetime import datetime
@@ -51,21 +51,52 @@ The account holder of {user_email}
 
 Date: {date}"""
 
+DPDPA_TEMPLATE = """Dear Data Protection Officer / Grievance Officer,
+
+I am writing to exercise my right to erasure of personal data under Section 12(3) of the Digital Personal Data Protection Act, 2023 (DPDPA) of India.
+
+I hereby request that {company} erase all personal data that you have collected, stored, or processed about me. I withdraw my consent for the processing of my personal data, and I request that you:
+
+1. Permanently erase all personal data associated with my account and the email address listed below from all your systems, databases, and records;
+
+2. Direct any data processors or third parties with whom you have shared my personal data to erase it as well;
+
+3. Cease all processing of my personal data immediately upon receipt of this request;
+
+4. Provide me with a written confirmation that the erasure has been completed.
+
+My details for identification:
+- Email address: {user_email}
+
+Under the DPDPA 2023, Data Fiduciaries are required to comply with erasure requests within a reasonable timeframe. Failure to comply may result in a complaint to the Data Protection Board of India under Section 27 of the Act.
+
+If you require any additional information to verify my identity, please inform me of the same.
+
+Yours faithfully,
+The account holder of {user_email}
+
+Date: {date}
+
+This request is made pursuant to the Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023), Government of India.
+Non-compliance may be reported to the Data Protection Board of India."""
+
 
 class DeletionTemplateEngine:
     """
     Generates legally-compliant data deletion request emails.
-    Supports GDPR (EU) and CCPA (California) jurisdictions.
+    Supports GDPR (EU), CCPA (California), and DPDPA (India) jurisdictions.
     """
 
     TEMPLATES = {
         "gdpr": GDPR_TEMPLATE,
         "ccpa": CCPA_TEMPLATE,
+        "dpdpa": DPDPA_TEMPLATE,
     }
 
     SUBJECTS = {
         "gdpr": "GDPR Article 17 — Right to Erasure Request",
         "ccpa": "CCPA Section 1798.105 — Right to Deletion Request",
+        "dpdpa": "DPDPA Section 12(3) — Right to Erasure of Personal Data",
     }
 
     @classmethod
@@ -81,7 +112,7 @@ class DeletionTemplateEngine:
         Args:
             company: Name of the target company.
             user_email: The user's email address.
-            jurisdiction: Legal framework — 'gdpr' or 'ccpa'.
+            jurisdiction: Legal framework — 'gdpr', 'ccpa', or 'dpdpa'.
 
         Returns:
             Dict with 'subject' and 'body' populated from the template.
