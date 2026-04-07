@@ -47,17 +47,39 @@ async def scan_emails(credentials: Credentials = Depends(get_credentials)):
 async def dpo_lookup(domain: str):
     """
     Look up the Data Protection Officer / privacy contact for a domain.
-
-    Args:
-        domain: Company domain (e.g., 'facebook.com')
-
-    Returns:
-        DPO email, company name, confidence score, and all candidate emails.
+    Fast lookup (known map + patterns only — no scraping).
     """
     if not domain or "." not in domain:
         raise HTTPException(status_code=400, detail="Invalid domain. Provide a valid domain like 'example.com'.")
 
     result = DPOResolver.resolve(domain)
+    return result
+
+
+@router.get("/dpo-lookup-deep")
+async def dpo_lookup_deep(domain: str):
+    """
+    Deep DPO lookup: scrapes privacy pages + validates MX records.
+    Slower but more accurate than the basic lookup.
+    """
+    if not domain or "." not in domain:
+        raise HTTPException(status_code=400, detail="Invalid domain.")
+
+    result = await DPOResolver.resolve_deep(domain)
+    return result
+
+
+@router.get("/verify-email")
+async def verify_email(email: str):
+    """
+    Verify if an email address domain has valid MX records.
+    Use this before sending to check if the email can receive mail.
+    """
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Invalid email address.")
+
+    from services.email_verifier import verify_email_domain
+    result = verify_email_domain(email)
     return result
 
 

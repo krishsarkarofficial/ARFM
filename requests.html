@@ -620,24 +620,133 @@
       bar.style.display = 'block';
       input.value = `privacy@${domain}`;
       confEl.textContent = '';
-      srcEl.textContent = 'Resolving...';
+      srcEl.textContent = '🔍 Searching for DPO...';
+      srcEl.style.color = 'var(--text-dim)';
 
       try {
-        const resp = await fetch(`${API_CONFIG.BASE_URL}/api/dpo-lookup?domain=${encodeURIComponent(domain)}`, { credentials: 'include' });
+        // Use deep lookup (scrapes privacy pages + MX validation)
+        const resp = await fetch(`${API_CONFIG.BASE_URL}/api/dpo-lookup-deep?domain=${encodeURIComponent(domain)}`, { credentials: 'include' });
         if (resp.ok) {
           const data = await resp.json();
           input.value = data.dpo_email;
           const pct = Math.round(data.confidence * 100);
           confEl.textContent = `${pct}% confidence`;
-          confEl.className = `badge ${pct >= 90 ? 'badge-green' : pct >= 60 ? 'badge-amber' : 'badge-red'}`;
-          srcEl.textContent = data.source === 'known_map' ? '✓ Verified DPO' : '⚡ Auto-generated';
-          srcEl.style.color = data.source === 'known_map' ? 'var(--green)' : 'var(--amber)';
+          confEl.className = `badge ${pct >= 80 ? 'badge-green' : pct >= 50 ? 'badge-amber' : 'badge-red'}`;
+
+          // Show source with verification badge
+          const sourceLabels = {
+            'known_map': '✓ Verified DPO',
+            'privacy_page_scraper': '🔍 Found on privacy page',
+            'mx_validated_pattern': '📬 MX Verified',
+            'unverified_fallback': '⚠ Unverified — edit if needed',
+            'pattern_generated': '⚡ Auto-generated',
+          };
+          srcEl.textContent = sourceLabels[data.source] || data.source;
+          srcEl.style.color = data.verified ? 'var(--green)' : 'var(--amber)';
+
+          // If there are alternative candidates, show them
+          if (data.all_candidates && data.all_candidates.length > 1) {
+            showCandidates(data.all_candidates, input);
+          }
+
+          // If unverified, show warning styling on input
+          if (!data.verified) {
+            input.style.borderColor = 'var(--amber)';
+          } else {
+            input.style.borderColor = 'var(--green)';
+          }
         }
       } catch (e) {
-        srcEl.textContent = '⚠ Fallback (offline)';
+        // Fallback to basic lookup
+        try {
+          const resp2 = await fetch(`${API_CONFIG.BASE_URL}/api/dpo-lookup?domain=${encodeURIComponent(domain)}`, { credentials: 'include' });
+          if (resp2.ok) {
+            const data = await resp2.json();
+            input.value = data.dpo_email;
+            confEl.textContent = `${Math.round(data.confidence * 100)}%`;
+            confEl.className = 'badge badge-amber';
+            srcEl.textContent = '⚡ Basic lookup (deep search unavailable)';
+            srcEl.style.color = 'var(--amber)';
+          }
+        } catch (e2) {
+          srcEl.textContent = '⚠ Offline — enter DPO email manually';
+          srcEl.style.color = 'var(--red)';
+        }
+      }
+    }
+
+    function showCandidates(candidates, input) {
+      // Remove existing dropdown if any
+      const existing = document.getElementById('dpo-candidates');
+      if (existing) existing.remove();
+
+      const select = document.createElement('select');
+      select.id = 'dpo-candidates';
+      select.style.cssText = 'padding:4px 8px;font-size:11px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;max-width:180px;';
+      
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = `▾ ${candidates.length} alternatives`;
+      select.appendChild(defaultOpt);
+
+      candidates.forEach(email => {
+        const opt = document.createElement('option');
+        opt.value = email;
+        opt.textContent = email;
+        select.appendChild(opt);
+      });
+
+      select.addEventListener('change', () => {
+        if (select.value) {
+          input.value = select.value;
+          verifyEmail(select.value);
+        }
+      });
+
+      input.parentNode.appendChild(select);
+    }
+
+    async function verifyEmail(email) {
+      const srcEl = document.getElementById('dpo-source');
+      const input = document.getElementById('dpo-email-input');
+      srcEl.textContent = '📬 Verifying...';
+      srcEl.style.color = 'var(--text-dim)';
+
+      try {
+        const resp = await fetch(`${API_CONFIG.BASE_URL}/api/verify-email?email=${encodeURIComponent(email)}`, { credentials: 'include' });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.valid) {
+            srcEl.textContent = '✓ Email domain verified (MX valid)';
+            srcEl.style.color = 'var(--green)';
+            input.style.borderColor = 'var(--green)';
+          } else {
+            srcEl.textContent = '✗ Email domain invalid — this will bounce!';
+            srcEl.style.color = 'var(--red)';
+            input.style.borderColor = 'var(--red)';
+          }
+        }
+      } catch (e) {
+        srcEl.textContent = '⚠ Could not verify';
         srcEl.style.color = 'var(--amber)';
       }
     }
+
+    // Verify when user manually changes the email
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('dpo-email-input');
+      if (input) {
+        let verifyTimeout;
+        input.addEventListener('input', () => {
+          clearTimeout(verifyTimeout);
+          verifyTimeout = setTimeout(() => {
+            if (input.value && input.value.includes('@')) {
+              verifyEmail(input.value);
+            }
+          }, 800);
+        });
+      }
+    });
 
     function setReg(reg) {
       currentReg = reg;
